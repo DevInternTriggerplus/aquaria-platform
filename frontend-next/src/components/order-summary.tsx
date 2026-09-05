@@ -28,6 +28,7 @@ export function OrderSummary({
   currency,
   onContinue,
   busy,
+  completed,
 }: {
   venueName: string;
   locality?: string;
@@ -37,6 +38,7 @@ export function OrderSummary({
   currency: string;
   onContinue: () => void;
   busy?: boolean;
+  completed?: boolean;
 }) {
   const totalTickets = lines.reduce((n, l) => n + l.quantity, 0);
   const discount =
@@ -149,10 +151,10 @@ export function OrderSummary({
           <button
             type="button"
             onClick={onContinue}
-            disabled={busy || totalTickets === 0}
+            disabled={busy || completed || totalTickets === 0}
             className="flex min-h-[52px] w-full items-center justify-between gap-2 rounded-lg bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-50"
           >
-            <span>{busy ? "Confirming…" : "Confirm mock payment"}</span>
+            <span>{completed ? "Booking confirmed" : busy ? "Confirming…" : "Confirm mock payment"}</span>
             <span aria-hidden>→</span>
           </button>
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">

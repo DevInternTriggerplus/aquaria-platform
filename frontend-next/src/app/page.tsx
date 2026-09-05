@@ -58,6 +58,7 @@ export default function BookingPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [booking, setBooking] = useState<ConfirmedBooking | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -85,6 +86,7 @@ export default function BookingPage() {
     if (!visitDate) return;
     setQuantities({});
     setBooking(null);
+    setIdempotencyKey(null);
     api
       .products(visitDate)
       .then((data) => setProducts(data.products))
@@ -132,6 +134,8 @@ export default function BookingPage() {
     }));
 
   const setQuantity = useCallback((id: string, next: number) => {
+    setBooking(null);
+    setIdempotencyKey(null);
     setQuantities((prev) => ({ ...prev, [id]: next }));
   }, []);
 
@@ -148,7 +152,7 @@ export default function BookingPage() {
     const requiredConsentMissing = consent?.items.some(
       (item) => item.required && !consentItems[item.code],
     );
-    if (!visitDate || confirmationLines.length === 0) return;
+    if (!visitDate || confirmationLines.length === 0 || booking) return;
     if (!fullName.trim() || !email.trim()) {
       setError("Enter your name and email to create the demo booking.");
       return;
@@ -164,7 +168,8 @@ export default function BookingPage() {
       // Quote and confirmation both re-price on the server; no client total is trusted.
       const quote = await api.quote(visitDate, confirmationLines);
       setCharges(quote.charges);
-      const idempotencyKey = crypto.randomUUID();
+      const key = idempotencyKey ?? crypto.randomUUID();
+      setIdempotencyKey(key);
       setBooking(
         await api.confirm({
           visit_date: visitDate,
@@ -172,7 +177,7 @@ export default function BookingPage() {
           email: email.trim(),
           full_name: fullName.trim(),
           consent_items: consentItems,
-          idempotency_key: idempotencyKey,
+          idempotency_key: key,
         }),
       );
     } catch (e) {
@@ -369,6 +374,7 @@ export default function BookingPage() {
             currency={currency}
             onContinue={onContinue}
             busy={busy}
+            completed={Boolean(booking)}
           />
         </div>
       </main>
