@@ -1,0 +1,14 @@
+# Aquaria backend — Django + PostgreSQL
+#
+# Pinned exactly: a ticketing system that handles money should not float its
+# dependency versions.
+Django==5.2.17
+djangorestframework==3.16.1
+psycopg[binary]==3.2.13
+django-environ==0.12.0
+django-cors-headers==4.7.0
+gunicorn==26.2.0
+whitenoise==6.12.0
+
+# Timezone database, so venue-local evaluation works on hosts without one.
+tzdata==2025.2

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aquaria Phuket — Book your visit</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/reports.css">
+<link rel="stylesheet" href="/backoffice.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">
+        <strong id="venueName">Aquaria Phuket</strong>
+        <small id="venueHours">Loading…</small>
+      </span>
+    </div>
+    <div class="header-tools">
+      <div class="lang-picker">
+        <label for="langSelect" class="lang-label" data-t="language">Language</label>
+        <select id="langSelect" class="lang-select" aria-label="Choose language"></select>
+      </div>
+      <!-- data-route drives the hash router. Reports, Operations and Back office are
+           protected destinations: clicking them when signed out lands on Login and
+           returns here afterwards (§5, §63, §64). -->
+      <nav class="header-nav" aria-label="Sections">
+        <button type="button" class="nav-btn is-active" data-view="book" data-route="/book" data-t="nav_book">Book</button>
+        <button type="button" class="nav-btn" data-view="shows" data-route="/shows" data-t="nav_shows">What's on</button>
+        <button type="button" class="nav-btn" data-view="manage" data-route="/manage" data-t="nav_manage">My booking</button>
+        <button type="button" class="nav-btn" data-view="reports" data-route="/reports" data-t="nav_reports">Reports</button>
+        <button type="button" class="nav-btn" data-view="backoffice" data-route="/settings" data-t="nav_backoffice">Back office</button>
+        <button type="button" class="nav-btn" data-view="ops" data-route="/operations" data-t="nav_ops">Operations</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- Hero. Shown on the booking view only (toggled in showView); the staff and
+     manage views go straight to their content. The image is served from this origin
+     because the CSP allows img-src 'self' only. -->
+<section class="hero" id="hero">
+  <img class="hero-img" src="/aquarium-hero.jpg" alt="" width="1920" height="1080" aria-hidden="true">
+  <div class="wrap hero-inner">
+    <p class="hero-badge" id="heroBadge" data-t="online_booking">Online booking</p>
+    <h1 id="heroTitle">Book your visit to Aquaria Phuket</h1>
+    <p id="heroLead">Pick your date, choose your tickets and pay securely. Your QR e-ticket
+      arrives by email — walk straight to the gate.</p>
+    <ul class="hero-facts">
+      <li><span class="hf-dot" aria-hidden="true"></span><span id="heroHours">Open daily</span></li>
+      <li><span class="hf-dot" aria-hidden="true"></span><span data-t="fact_qr">Instant QR e-ticket</span></li>
+      <li><span class="hf-dot" aria-hidden="true"></span><span data-t="fact_no_account">No account needed</span></li>
+    </ul>
+  </div>
+</section>
+
+<main id="main" class="wrap">
+
+  <!-- ============================ BOOK ============================ -->
+  <section id="view-book" class="view">
+    <ol class="steps" id="steps" aria-label="Booking progress"></ol>
+
+    <div class="layout">
+      <div class="col-main">
+
+        <!-- Step 1: date -->
+        <section class="panel" id="panel-date" aria-labelledby="h-date">
+          <h2 id="h-date" data-step="1" data-t="step_date">Choose your visit date</h2>
+          <div class="cal-head">
+            <button type="button" class="ghost" id="calPrev" aria-label="Previous month">&larr;</button>
+            <strong id="calLabel" aria-live="polite">…</strong>
+            <button type="button" class="ghost" id="calNext" aria-label="Next month">&rarr;</button>
+          </div>
+          <div class="cal-dow" id="calDow" aria-hidden="true">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="cal-grid" id="calGrid" role="group" aria-label="Select a visit date"></div>
+          <ul class="legend" id="calLegend" aria-label="Calendar key"></ul>
+          <p class="hint" id="dateHint" role="status"></p>
+        </section>
+
+        <!-- Step 2: tickets -->
+        <section class="panel" id="panel-tickets" aria-labelledby="h-tickets" hidden>
+          <h2 id="h-tickets" data-step="2" data-t="step_tickets">Choose your tickets</h2>
+
+          <!-- Pricing group (Thai / International). Prices are only shown once a
+               group is chosen, so the customer sees the rate that applies to them. -->
+          <fieldset class="group-picker" id="pricingGroup" aria-describedby="groupPrompt">
+            <legend id="groupPrompt">Who are the tickets for?</legend>
+            <div class="group-cards" role="radiogroup" aria-labelledby="groupPrompt">
+              <label class="group-card">
+                <input type="radio" name="pricingGroup" value="LOCAL">
+                <span class="gc-body">
+                  <span class="gc-flag" aria-hidden="true">🇹🇭</span>
+                  <span class="gc-name" data-t="group_local">Thai</span>
+                  <span class="gc-note" data-t="group_local_note">Thai residents &amp; qualifying expatriates</span>
+                </span>
+                <span class="gc-check" aria-hidden="true"></span>
+              </label>
+              <label class="group-card">
+                <input type="radio" name="pricingGroup" value="INTL">
+                <span class="gc-body">
+                  <span class="gc-flag" aria-hidden="true">🌍</span>
+                  <span class="gc-name" data-t="group_intl">International</span>
+                  <span class="gc-note" data-t="group_intl_note">Visitors from outside Thailand</span>
+                </span>
+                <span class="gc-check" aria-hidden="true"></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div id="productList"></div>
+          <div class="promo" id="promoBlock" hidden>
+            <label for="promoCode"><span data-t="promo_code">Promotion code</span> <span class="opt" data-t="optional">(optional)</span></label>
+            <div class="promo-row">
+              <input id="promoCode" type="text" autocomplete="off" placeholder="e.g. WELCOME100">
+              <button type="button" class="secondary" id="applyPromo" data-t="apply">Apply</button>
+            </div>
+            <p class="hint" id="promoHint" role="status"></p>
+          </div>
+        </section>
+
+        <!-- Step 3: details -->
+        <section class="panel" id="panel-details" aria-labelledby="h-details" hidden>
+          <h2 id="h-details" data-step="3" data-t="step_details">Your details</h2>
+          <div class="field">
+            <label for="fullName" data-t="full_name">Full name</label>
+            <input id="fullName" type="text" autocomplete="name" required>
+            <p class="err" id="err-full_name"></p>
+          </div>
+          <div class="field">
+            <label for="email" data-t="email_address">Email address</label>
+            <input id="email" type="email" autocomplete="email" required
+                   aria-describedby="emailHelp">
+            <small id="emailHelp" class="hint" data-t="email_help">Your e-ticket and QR code are sent here.</small>
+            <p class="err" id="err-email"></p>
+          </div>
+          <div class="field">
+            <label for="phone"><span data-t="mobile_number">Mobile number</span> <span class="opt" data-t="optional">(optional)</span></label>
+            <input id="phone" type="tel" autocomplete="tel">
+          </div>
+          <div class="panel-actions">
+            <button type="button" class="ghost" id="backToTickets" data-t="back">Back</button>
+          </div>
+          <p class="err" id="err-confirm"></p>
+        </section>
+
+        <!-- Confirmation -->
+        <section class="panel confirmed" id="panel-done" aria-labelledby="h-done" hidden>
+          <h2 id="h-done"><span class="tick" aria-hidden="true">&check;</span> <span data-t="booking_confirmed">Booking confirmed</span></h2>
+          <p id="doneSummary"></p>
+          <div id="ticketList" class="tickets"></div>
+          <div class="done-actions">
+            <button type="button" class="secondary" id="viewMailbox" data-t="view_email">View the email we sent</button>
+            <button type="button" class="ghost" id="startOver" data-t="book_another">Book another visit</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Order summary -->
+      <aside class="col-side">
+        <div class="summary" id="summary" aria-live="polite">
+          <!-- Ticket-head panel: venue identity, so the summary reads as the thing
+               being bought rather than a bare list of numbers. -->
+          <div class="summary-head">
+            <p class="summary-eyebrow" data-t="sec_visit">Your visit</p>
+            <p class="summary-place" id="sumPlace">Aquaria Phuket</p>
+            <p class="summary-tag" id="sumTag"></p>
+          </div>
+          <div class="summary-body">
+            <h2><span data-t="your_order">Your order</span><span class="count" id="sumCount" hidden>0</span></h2>
+            <div id="summaryBody"><p class="muted">Choose a date to begin.</p></div>
+            <!-- Primary call to action. The hold countdown is deliberately subtle
+                 beneath it; the emphasis is on paying, not on the timer. -->
+            <div class="pay-cta" id="payCta" hidden>
+              <button type="button" class="primary make-payment" id="makePaymentBtn">
+                <span class="mp-label" data-t="make_payment">Make a Payment</span>
+                <span class="mp-icon" aria-hidden="true"></span>
+              </button>
+              <p class="pay-note">
+                <span class="lock" aria-hidden="true"></span>
+                <span>Secure checkout · QR e-ticket emailed instantly</span>
+              </p>
+              <p class="hold-subtle" id="holdSubtle" hidden>
+                <span class="hold-dot" aria-hidden="true"></span>
+                <span id="holdSubtleText">—</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================ SHOWS ============================ -->
+  <section id="view-shows" class="view" hidden>
+    <div class="panel">
+      <h2>What's on</h2>
+      <p class="hint" id="showTz"></p>
+      <div class="date-strip" id="showDates" role="group" aria-label="Choose a date"></div>
+      <div class="filters" id="showFilters" role="group" aria-label="Filter shows"></div>
+      <div id="showList" class="timeline"></div>
+    </div>
+  </section>
+
+  <!-- ============================ MANAGE ============================ -->
+  <section id="view-manage" class="view" hidden>
+    <div class="panel narrow">
+      <h2 data-t="manage_title">Manage your booking</h2>
+      <p class="hint" data-t="manage_hint">We'll email a one-time code to the address on the booking.</p>
+      <div class="field">
+        <label for="mBooking" data-t="manage_booking_number">Booking number</label>
+        <input id="mBooking" type="text" placeholder="AQP-XXXX-XXXX" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="mEmail" data-t="manage_email">Email address</label>
+        <input id="mEmail" type="email" autocomplete="email" required>
+      </div>
+      <button type="button" class="primary" id="mRequest" data-t="manage_send_code">Send me a code</button>
+      <div id="mCodeBlock" hidden>
+        <div class="field">
+          <label for="mCode" data-t="manage_code">Verification code</label>
+          <input id="mCode" type="text" inputmode="numeric" autocomplete="one-time-code" required>
+        </div>
+        <button type="button" class="primary" id="mVerify" data-t="manage_view">View my booking</button>
+      </div>
+      <p class="hint" id="mHint" role="status"></p>
+      <div id="mResult"></div>
+    </div>
+  </section>
+
+  <!-- ========================== REPORTS ========================== -->
+  <!-- Analytics, Operations and Finance. The navigation, the filter bar and every
+       table are rendered from the server's report catalog, so a new report needs no
+       markup here. Staff sign-in happens in the Operations view; this screen shows
+       an authorization message until then. -->
+  <section id="view-reports" class="view" hidden>
+    <div class="rp-shell">
+      <aside id="reportSide" class="rp-side-wrap" aria-label="Report navigation"></aside>
+      <div class="rp-main">
+        <nav id="reportCrumb" class="rp-crumb" aria-label="Breadcrumb" hidden></nav>
+        <header class="rp-head">
+          <div>
+            <h2 id="reportTitle">Reports</h2>
+            <p id="reportSummary" class="hint"></p>
+          </div>
+          <div id="reportExport" class="rp-export" hidden></div>
+        </header>
+        <div id="reportFilters" class="rp-filter-wrap"></div>
+        <p id="reportMeta" class="rp-meta" aria-live="polite"></p>
+        <div id="reportBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================== LOGIN =========================== -->
+  <!-- Staff sign-in (§1, §2). Validation messages are business language only: never a
+       database error, a stack trace or an authentication-provider code. The server
+       answers "Email or password is incorrect" for both an unknown address and a bad
+       password, so this page cannot be used to discover who has an account. -->
+  <section id="view-login" class="view" hidden>
+    <div class="lg-wrap">
+      <form class="lg-card" id="loginForm" novalidate>
+        <div class="lg-brand" aria-hidden="true"><span class="brand-mark"></span></div>
+        <h2 class="lg-title" data-t="login_title">Welcome back</h2>
+        <p class="lg-lead" id="loginLead" data-t="login_lead">Sign in with your staff account to reach the back office.</p>
+
+        <p class="lg-notice" id="loginNotice" role="status" hidden></p>
+
+        <div class="field">
+          <label for="loginEmail" class="is-required" data-t="login_email">Email</label>
+          <input id="loginEmail" name="email" type="email" autocomplete="username" required
+                 list="loginEmailHints" spellcheck="false" autocapitalize="off">
+          <!-- Demo convenience only: a datalist of the seeded accounts. It is a hint
+               list, not a whitelist; any staff email may be typed. -->
+          <datalist id="loginEmailHints">
+            <option value="manager@aquaria.test">Venue Manager</option>
+            <option value="cashier@aquaria.test">Counter / Cashier</option>
+            <option value="gate@aquaria.test">Gate Staff</option>
+            <option value="viewer@aquaria.test">Report Viewer</option>
+            <option value="admin@aquaria.test">Platform Super Admin (MFA)</option>
+          </datalist>
+          <p class="err" id="loginEmailErr" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="loginPass" class="is-required" data-t="login_password">Password</label>
+          <div class="lg-pass">
+            <input id="loginPass" name="credential" type="password" autocomplete="current-password" required>
+            <button type="button" class="lg-eye" id="loginReveal" aria-pressed="false"
+                    data-t-title="login_show" title="Show password">
+              <span class="lg-eye-icon" aria-hidden="true"></span>
+              <span class="sr-only" id="loginRevealText" data-t="login_show">Show password</span>
+            </button>
+          </div>
+          <p class="err" id="loginPassErr" hidden></p>
+        </div>
+
+        <!-- Shown only when the account requires MFA (R73.2). Asking everyone for a
+             code they do not have would train people to ignore the field. -->
+        <div class="field" id="loginMfaField" hidden>
+          <label for="loginMfa" data-t="login_mfa">Authenticator code</label>
+          <input id="loginMfa" name="mfa_code" type="text" inputmode="numeric" autocomplete="one-time-code"
+                 maxlength="8" spellcheck="false">
+          <p class="hint" data-t="login_mfa_hint">This account requires multi-factor authentication.</p>
+        </div>
+
+        <div class="lg-row">
+          <label class="lg-check">
+            <input id="loginRemember" type="checkbox">
+            <span data-t="login_remember">Keep me signed in on this device</span>
+          </label>
+          <button type="button" class="link-btn" id="loginForgot" data-t="login_forgot">Forgot password?</button>
+        </div>
+
+        <button type="submit" class="primary big lg-submit" id="loginSubmit" data-t="login_submit">Sign in</button>
+        <p class="hint lg-foot" id="loginHelp" data-t="login_help">Trouble signing in? Contact your administrator.</p>
+      </form>
+
+      <!-- Self-service password reset (settings spec §1). Hidden until the user
+           clicks "Forgot password?". Two steps: request a code by email, then set a
+           new password with that code. -->
+      <form class="lg-card" id="resetForm" novalidate hidden>
+        <h2 class="lg-title" data-t="reset_title">Reset your password</h2>
+        <p class="lg-lead" data-t="reset_lead">Enter your email and we'll send a one-time reset code.</p>
+        <p class="lg-notice" id="resetNotice" role="status" hidden></p>
+        <div class="field">
+          <label for="resetEmail" class="is-required" data-t="login_email">Email</label>
+          <input id="resetEmail" name="email" type="email" autocomplete="username" required spellcheck="false" autocapitalize="off">
+        </div>
+        <div id="resetStep2" hidden>
+          <div class="field">
+            <label for="resetToken" class="is-required" data-t="reset_code">Reset code</label>
+            <input id="resetToken" name="token" type="text" spellcheck="false" autocapitalize="off">
+          </div>
+          <div class="field">
+            <label for="resetPass" class="is-required" data-t="reset_new_password">New password</label>
+            <input id="resetPass" name="credential" type="password" autocomplete="new-password">
+            <p class="hint" data-t="reset_password_hint">At least 12 characters, with upper and lower case and a number.</p>
+          </div>
+        </div>
+        <button type="button" class="primary big lg-submit" id="resetRequest" data-t="reset_request">Send reset code</button>
+        <button type="button" class="primary big lg-submit" id="resetSubmit" data-t="reset_submit" hidden>Set new password</button>
+        <button type="button" class="link-btn" id="resetBack" data-t="reset_back">Back to sign in</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ========================= BACK OFFICE ======================== -->
+  <!-- Shell for every protected screen: Settings home, a Settings page, the Role
+       editor, Staff, and the Access Denied state. The sidebar is built from the
+       signed-in user's effective VIEW permissions (§45, §70) — never from a role
+       name (§48). Everything it links to re-checks the same permission server-side. -->
+  <section id="view-backoffice" class="view" hidden>
+    <div class="bo-shell">
+      <aside class="bo-side" id="boSide" aria-label="Back office navigation"></aside>
+      <div class="bo-main">
+        <div class="bo-topbar">
+          <button type="button" class="bo-burger" id="boBurger" aria-expanded="false"
+                  aria-controls="boSide" data-t-title="bo_menu" title="Menu">
+            <span aria-hidden="true"></span><span class="sr-only" data-t="bo_menu">Menu</span>
+          </button>
+          <!-- Scope banner (§34). An administrator must never be unsure which
+               organization and venue they are about to change. -->
+          <div class="bo-scope" id="boScope"></div>
+          <div class="bo-profile" id="boProfile"></div>
+        </div>
+        <nav class="bo-crumb" id="boCrumb" aria-label="Breadcrumb" hidden></nav>
+        <div class="bo-body" id="boBody" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ OPS ============================ -->
+  <section id="view-ops" class="view" hidden>
+    <div class="panel">
+      <h2>Operations</h2>
+      <p class="hint">Demonstrates the staff side: permissions are enforced server-side, so a
+        role without a permission is refused by the API even if the button is visible.</p>
+      <div class="ops-grid">
+        <div>
+          <h3>Sign in</h3>
+          <div class="field">
+            <label for="sEmail">Staff email</label>
+            <select id="sEmail">
+              <option value="admin@aquaria.test">admin@aquaria.test (Super Admin)</option>
+              <option value="manager@aquaria.test">manager@aquaria.test (Venue Manager)</option>
+              <option value="cashier@aquaria.test">cashier@aquaria.test (Cashier)</option>
+              <option value="gate@aquaria.test">gate@aquaria.test (Gate Staff)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sPass">Password</label>
+            <input id="sPass" type="password" value="Aquaria-Demo-2026" autocomplete="current-password">
+          </div>
+          <button type="button" class="primary" id="sLogin">Sign in</button>
+          <p class="hint" id="sHint" role="status"></p>
+        </div>
+        <div>
+          <h3>Accessible pages</h3>
+          <ul id="sNav" class="nav-list"><li class="muted">Sign in to see the navigation this role gets.</li></ul>
+        </div>
+      </div>
+      <div class="ops-actions">
+        <button type="button" class="secondary" id="sBookings">Load bookings</button>
+        <button type="button" class="secondary" id="sAudit">Load audit log</button>
+        <button type="button" class="secondary" id="sSettings">Business settings</button>
+        <button type="button" class="secondary" id="sPosture">Security posture</button>
+      </div>
+      <div id="sOut" class="output"></div>
+
+      <!-- Gate scanner (R32). Paste a ticket QR payload to see the gate decision.
+           Useful with the "View the email we sent" tickets or a confirmed booking. -->
+      <div class="gate-tool">
+        <h3>Gate scanner</h3>
+        <p class="hint">Paste a ticket's QR payload (starts with <code>UTP1.</code>) to validate it at the gate.
+          Same-day tickets admit; a second scan of a single-entry ticket is refused.</p>
+        <div class="field">
+          <label for="gatePayload">QR payload</label>
+          <input id="gatePayload" type="text" autocomplete="off" placeholder="UTP1.…">
+        </div>
+        <button type="button" class="primary" id="gateScan">Scan</button>
+        <div id="gateResult" class="gate-result" hidden></div>
+      </div>
+
+      <!-- Business / venue settings (add_features §25). Rendered only after a
+           staff member signs in; edits are enforced server-side regardless. -->
+      <div id="settingsPanel" class="settings-panel" hidden>
+        <h3>Business &amp; venue settings</h3>
+        <p class="hint" id="settingsHint">Changes take effect for new transactions. History is kept; nothing is overwritten.</p>
+        <div id="settingsBody" class="settings-groups"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p id="footerLine">Aquaria Phuket</p>
+</footer>
+
+<!-- Sticky mobile pay bar (R33.2/§36). Mirrors the aside CTA on narrow viewports. -->
+<div class="sticky-pay" id="stickyPay" hidden>
+  <div class="sp-total">
+    <span class="sp-total-label" data-t="total">Total</span>
+    <strong id="stickyTotal">—</strong>
+  </div>
+  <button type="button" class="primary make-payment" id="stickyPayBtn">
+    <span class="mp-label" data-t="make_payment">Make a Payment</span>
+    <span class="mp-icon" aria-hidden="true"></span>
+  </button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+
+<dialog id="consentDialog" aria-labelledby="consentTitle">
+  <form method="dialog" id="consentForm">
+    <h2 id="consentTitle">Before we continue</h2>
+    <div id="consentIntro" class="consent-intro"></div>
+    <div id="consentItems"></div>
+    <details class="consent-detail">
+      <summary>What we do with your data</summary>
+      <div id="consentDetail"></div>
+    </details>
+    <p class="err" id="consentErr"></p>
+    <menu>
+      <button type="button" class="ghost" id="consentCancel">Cancel</button>
+      <button type="button" class="primary" id="consentAccept" data-t="accept_and_pay" disabled>Accept and pay</button>
+    </menu>
+    <p class="hint" id="consentDisabledReason"></p>
+  </form>
+</dialog>
+
+<dialog id="reviewDialog" class="review-dialog" aria-labelledby="reviewTitle">
+  <div class="review-head">
+    <h2 id="reviewTitle" data-t="review_title">Review &amp; pay</h2>
+    <button type="button" class="icon-close" id="reviewClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="review-body" id="reviewBody">
+
+    <section class="rv-sec" aria-labelledby="rv-visit-h">
+      <h3 id="rv-visit-h" data-t="sec_visit">Your visit</h3>
+      <div id="rvVisit"></div>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="rv-visitors-h">
+      <h3 id="rv-visitors-h" data-t="sec_visitors">Visitors &amp; tickets</h3>
+      <div id="rvVisitors"></div>
+    </section>
+
+    <section class="rv-sec" id="rvPromoSec" aria-labelledby="rv-promo-h" hidden>
+      <h3 id="rv-promo-h" data-t="sec_promos">Promotions</h3>
+      <div id="rvPromos"></div>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="rv-price-h">
+      <h3 id="rv-price-h" data-t="sec_price">Price summary</h3>
+      <div id="rvPrice"></div>
+    </section>
+
+    <section class="rv-sec" id="rvDetailsSec" aria-labelledby="rv-details-h">
+      <h3 id="rv-details-h" data-t="sec_details">Your details</h3>
+      <div class="rv-details-row">
+        <div id="rvDetails"></div>
+        <button type="button" class="ghost rv-edit" id="rvEdit" data-t="edit">Edit</button>
+      </div>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="rv-pay-h">
+      <h3 id="rv-pay-h" data-t="sec_payment">Payment method</h3>
+      <div id="rvPayTypes" class="pay-types" role="radiogroup" aria-labelledby="rv-pay-h"></div>
+    </section>
+
+    <div id="rvNextSteps" class="next-steps"></div>
+    <p class="err" id="rvErr"></p>
+  </div>
+  <div class="review-foot">
+    <button type="button" class="primary big" id="rvPay" data-t="pay">Pay</button>
+  </div>
+</dialog>
+
+<dialog id="mailboxDialog" aria-labelledby="mailboxTitle">
+  <h2 id="mailboxTitle">Simulated mailbox</h2>
+  <p class="hint">The email the platform queued and delivered for this booking.</p>
+  <div id="mailboxBody" class="mailbox"></div>
+  <menu><button type="button" class="primary" id="mailboxClose">Close</button></menu>
+</dialog>
+
+<dialog id="boConfirmDialog" class="bo-confirm" aria-labelledby="boConfirmTitle">
+  <h2 id="boConfirmTitle">Confirm change</h2>
+  <div id="boConfirmBody" class="bo-confirm-body"></div>
+  <menu>
+    <button type="button" class="ghost" id="boConfirmCancel" data-t="cancel">Cancel</button>
+    <button type="button" class="primary" id="boConfirmOk" data-t="bo_confirm">Confirm change</button>
+  </menu>
+</dialog>
+
+<!-- Staff Access & Permissions viewer (Fix.md Gap 1). Shows the effective
+     permissions per venue and the role assignments, with controls to assign or
+     remove a role. -->
+<dialog id="boStaffAccessDialog" class="bo-confirm bo-record-dialog bo-staff-access" aria-labelledby="boStaffAccessTitle">
+  <h2 id="boStaffAccessTitle">Access &amp; permissions</h2>
+  <div id="boStaffAccessBody" class="bo-staff-access-body"></div>
+  <menu>
+    <button type="button" class="ghost" id="boStaffAccessClose" data-t="cancel">Close</button>
+  </menu>
+</dialog>
+
+<!-- Generic add/edit form for the record-collection settings pages. The fields are
+     built at runtime from the page's CRUD descriptor, so one dialog serves every
+     record page rather than a bespoke form each. -->
+<dialog id="boRecordDialog" class="bo-confirm bo-record-dialog" aria-labelledby="boRecordTitle">
+  <h2 id="boRecordTitle">Add record</h2>
+  <form id="boRecordForm" method="dialog">
+    <div id="boRecordFields" class="bo-record-fields"></div>
+    <p id="boRecordError" class="bo-banner is-warn" hidden></p>
+    <menu>
+      <button type="button" class="ghost" id="boRecordCancel" data-t="cancel">Cancel</button>
+      <button type="submit" class="primary" id="boRecordSave" data-t="save">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<!-- Shared topic-icon system (designIcon.md): one inline-SVG symbol sprite plus the
+     topic->icon mapping, used by both the reports module and the back office. Loaded
+     first so window.utpIcons exists before the screens that draw with it. -->
+<script src="/icons.js"></script>
+<script src="/app.js"></script>
+<!-- Reporting is a separate module so the booking flow does not carry the
+     analytics engine. Both are same-origin, which satisfies script-src 'self'. -->
+<script src="/reports.js"></script>
+<!-- The back office: router, route guard, Settings and the role editor. Loaded last
+     because it reads window.utpApi / utpAuth / utpShowView from app.js. -->
+<script src="/backoffice.js"></script>
+</body>
+</html>

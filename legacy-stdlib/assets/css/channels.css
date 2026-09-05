@@ -1,0 +1,502 @@
+/* ==========================================================================
+   Channel ergonomics (R65.2)
+   Kiosk  → very large touch targets, minimal text
+   POS    → dense, keyboard-first, speed
+   Backoffice → data density + sidebar shell
+   ========================================================================== */
+
+/* ==========================================================================
+   Kiosk
+   ========================================================================== */
+[data-channel="KIOSK"] body,
+body[data-channel="KIOSK"] {
+  background: var(--pc-050);
+}
+
+.kiosk-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.kiosk-top {
+  background: var(--brand-deep);
+  color: #fff;
+  padding: var(--s-4) var(--s-6);
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.kiosk-main {
+  padding: var(--s-6);
+  max-width: 1100px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.kiosk-foot {
+  background: var(--surface);
+  border-top: 2px solid var(--line);
+  padding: var(--s-4) var(--s-6) max(var(--s-4), env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  box-shadow: 0 -8px 28px rgba(6, 38, 58, 0.1);
+}
+
+.kiosk-total {
+  flex: 1 1 auto;
+}
+
+.kiosk-total small {
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: var(--fw-bold);
+}
+
+.kiosk-total b {
+  font-size: var(--fs-3xl);
+  color: var(--brand-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-channel="KIOSK"] .btn {
+  min-height: var(--tap-kiosk);
+  padding-inline: var(--s-7);
+  font-size: var(--fs-lg);
+  border-radius: var(--r-lg);
+}
+
+[data-channel="KIOSK"] .btn--lg {
+  min-height: 88px;
+  font-size: var(--fs-xl);
+}
+
+[data-channel="KIOSK"] .opt {
+  min-height: var(--tap-kiosk);
+  padding: var(--s-4) var(--s-5);
+}
+
+[data-channel="KIOSK"] .cal__cell {
+  min-height: 72px;
+}
+
+[data-channel="KIOSK"] .cal__num {
+  font-size: var(--fs-xl);
+}
+
+[data-channel="KIOSK"] .slot {
+  min-height: 104px;
+}
+
+[data-channel="KIOSK"] .slot b {
+  font-size: var(--fs-2xl);
+}
+
+[data-channel="KIOSK"] .field__label {
+  font-size: var(--fs-md);
+}
+
+/* Kiosk idle overlay */
+.idle {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(4, 27, 41, 0.86);
+  display: grid;
+  place-items: center;
+  padding: var(--s-6);
+  text-align: center;
+  color: #fff;
+}
+
+.idle[hidden] {
+  display: none;
+}
+
+.idle__box {
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--r-xl);
+  padding: var(--s-8);
+  max-width: 560px;
+  width: 100%;
+  box-shadow: var(--e-4);
+}
+
+.idle__count {
+  font-size: 4.5rem;
+  font-weight: var(--fw-bold);
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   Counter POS — speed and keyboard first (R34.2, R34.4)
+   ========================================================================== */
+.pos {
+  display: grid;
+  gap: var(--s-4);
+}
+
+@media (min-width: 1100px) {
+  .pos {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+  }
+}
+
+.postiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s-3);
+}
+
+.postile {
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: var(--s-3);
+  min-height: 88px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ink);
+  position: relative;
+}
+
+.postile:hover {
+  border-color: var(--brand);
+  background: var(--pc-050);
+}
+
+.postile b {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+
+.postile span {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.postile kbd {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  background: var(--muted-bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--ink-3);
+  font-family: inherit;
+  font-weight: var(--fw-bold);
+}
+
+/* ==========================================================================
+   Back office shell
+   ========================================================================== */
+.bo {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1080px) {
+  .bo {
+    grid-template-columns: 248px minmax(0, 1fr);
+  }
+}
+
+.bo__side {
+  display: none;
+  background: var(--brand-deep);
+  color: var(--pc-200);
+  padding: var(--s-4) var(--s-3);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 1080px) {
+  .bo__side {
+    display: block;
+  }
+}
+
+.bo__main {
+  min-width: 0;
+  background: var(--surface-2);
+}
+
+.bo__topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.bo__content {
+  padding: var(--s-5) var(--s-4) var(--s-9);
+}
+
+@media (min-width: 1080px) {
+  .bo__content {
+    padding: var(--s-6);
+  }
+}
+
+.bo__navgroup {
+  margin-bottom: var(--s-4);
+}
+
+.bo__navgroup > p {
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: var(--fw-bold);
+  color: var(--pc-400);
+  padding: 0 var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.bo__nav {
+  display: grid;
+  gap: 2px;
+}
+
+.bo__nav button,
+.bo__nav a {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  text-align: left;
+  min-height: 40px;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--pc-200);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.bo__nav button:hover,
+.bo__nav a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.bo__nav button[aria-current="true"],
+.bo__nav a[aria-current="page"] {
+  background: var(--pc-600);
+  color: #fff;
+}
+
+/* Permission-denied navigation item is not rendered at all (R42.7).
+   This class exists only for the demo explainer that shows what is hidden. */
+.bo__nav .denied {
+  opacity: 0.38;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.who {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-md);
+  padding: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+
+.who b {
+  color: #fff;
+  display: block;
+  font-size: var(--fs-sm);
+}
+
+.who span {
+  font-size: var(--fs-xs);
+  color: var(--pc-300);
+}
+
+/* Weekly show grid (back office) */
+.weekgrid {
+  display: grid;
+  grid-template-columns: 64px repeat(7, minmax(120px, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface);
+  min-width: 900px;
+}
+
+.weekgrid__cell {
+  border-right: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+  min-height: 56px;
+  padding: 4px;
+  display: grid;
+  gap: 3px;
+  align-content: start;
+}
+
+.weekgrid__cell:nth-child(8n) {
+  border-right: 0;
+}
+
+.weekgrid__hour {
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-weight: var(--fw-bold);
+  justify-items: center;
+  font-variant-numeric: tabular-nums;
+  padding-top: 6px;
+}
+
+.weekgrid__head {
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--ink-2);
+  text-align: center;
+  min-height: 40px;
+  align-content: center;
+  justify-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wsession {
+  border-radius: var(--r-xs);
+  padding: 3px 5px;
+  font-size: 10.5px;
+  line-height: 1.25;
+  background: var(--pc-100);
+  border-left: 3px solid var(--pc-500);
+  color: var(--pc-900);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  width: 100%;
+}
+
+.wsession:hover {
+  background: var(--pc-200);
+}
+
+.wsession b {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.wsession[data-origin="pattern"] {
+  border-left-style: solid;
+}
+
+.wsession[data-origin="override"] {
+  border-left-color: var(--warn);
+  border-left-style: double;
+  border-left-width: 4px;
+}
+
+.wsession[data-origin="oneoff"] {
+  border-left-color: var(--brand-accent);
+  border-left-style: dashed;
+}
+
+.wsession[data-draft="true"] {
+  background: repeating-linear-gradient(
+    135deg,
+    #F1F4F5,
+    #F1F4F5 4px,
+    #E7EDEF 4px,
+    #E7EDEF 8px
+  );
+  color: var(--ink-2);
+}
+
+/* Seat designer three-panel editor (R48.9) */
+.designer {
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1200px) {
+  .designer {
+    grid-template-columns: 210px minmax(0, 1fr) 260px;
+    align-items: start;
+  }
+}
+
+.palette {
+  display: grid;
+  gap: var(--s-2);
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.palette__group > p {
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  font-weight: var(--fw-bold);
+  margin: var(--s-2) 0 var(--s-1);
+}
+
+.palette__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: var(--s-1);
+}
+
+.palitem {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  padding: var(--s-2) 2px;
+  font-size: 9.5px;
+  color: var(--ink-2);
+  text-align: center;
+  cursor: grab;
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  min-height: 58px;
+  align-content: center;
+  font-family: inherit;
+  line-height: 1.15;
+}
+
+.palitem:hover {
+  border-color: var(--brand);
+  background: var(--pc-050);
+}

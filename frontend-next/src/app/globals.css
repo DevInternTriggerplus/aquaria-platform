@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens, carried across from the booking app's visual language so the
+ * Next, Flutter and legacy front ends read as one product.
+ *
+ * All colours are oklch. Peacock/deep-ocean primary with a warm amber accent that
+ * never carries meaning on its own — every status also has a label or icon,
+ * because colour alone is not an accessible cue.
+ */
+
+@theme inline {
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", ui-serif, serif;
+  --font-sans: "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-deep: var(--primary-deep);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --radius-card: 0.875rem;
+}
+
+:root {
+  --background: oklch(0.985 0.012 200);
+  --foreground: oklch(0.24 0.055 235);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.44 0.115 213);
+  --primary-foreground: oklch(0.985 0.012 200);
+  --primary-deep: oklch(0.3 0.06 227);
+  --secondary: oklch(0.94 0.032 200);
+  --muted: oklch(0.945 0.02 205);
+  --muted-foreground: oklch(0.5 0.032 226);
+  --accent: oklch(0.75 0.155 55);
+  --accent-foreground: oklch(0.22 0.05 235);
+  --border: oklch(0.9 0.024 208);
+  --success: oklch(0.62 0.12 165);
+  --warning: oklch(0.78 0.15 75);
+  --danger: oklch(0.52 0.18 25);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Keyboard users must always be able to see where they are. */
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

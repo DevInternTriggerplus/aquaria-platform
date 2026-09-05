@@ -1,0 +1,163 @@
+/* ==========================================================================
+   Universal Ticketing Platform — Design Tokens
+   Single design system shared by booking web app, kiosk, counter POS,
+   gate app and back office (R63.1).
+
+   Primary theme: Peacock Blue (R63.2)
+   Every token below is overridable per tenant/venue (R63.4) by setting the
+   same custom properties on a [data-brand] scope.
+   ========================================================================== */
+
+:root {
+  /* ---- Peacock Blue ramp -------------------------------------------------
+     Contrast-checked against white and against --ink for label legibility. */
+  --pc-950: #041B29;
+  --pc-900: #06263A; /* deep peacock / navy — headers, primary nav */
+  --pc-800: #0A3A55;
+  --pc-700: #0E4D6E;
+  --pc-600: #0F6C8C; /* PRIMARY peacock blue */
+  --pc-500: #14879E;
+  --pc-400: #2AA6A6; /* soft teal accent */
+  --pc-300: #7CC9D1;
+  --pc-200: #BFE4E9;
+  --pc-100: #E6F4F7;
+  --pc-050: #F4FAFC; /* very light blue content background */
+
+  /* ---- Neutrals --------------------------------------------------------- */
+  --ink: #10242E;
+  --ink-2: #33505C;
+  --ink-3: #5C7784;
+  --ink-4: #8AA0AA;
+  --line: #D7E4EA;
+  --line-2: #E9F1F4;
+  --surface: #FFFFFF;
+  --surface-2: var(--pc-050);
+  --surface-3: var(--pc-100);
+
+  /* ---- Semantic --------------------------------------------------------- */
+  --ok: #0E7C5A;
+  --ok-bg: #E4F5EE;
+  --warn: #96590A;
+  --warn-bg: #FDF2DF;
+  --danger: #A8231C;
+  --danger-bg: #FBEAE8;
+  --info: var(--pc-600);
+  --info-bg: var(--pc-100);
+  --muted-bg: #EEF2F4;
+
+  /* ---- Brand semantics -------------------------------------------------- */
+  --brand: var(--pc-600);
+  --brand-strong: var(--pc-700);
+  --brand-deep: var(--pc-900);
+  --brand-accent: var(--pc-400);
+  --on-brand: #FFFFFF;
+
+  /* ---- Typography ------------------------------------------------------- */
+  /* Thai typography must render without clipping (R69.8): Thai-capable faces
+     lead the stack and line-height is generous enough for Thai ascenders. */
+  --font-sans: "Noto Sans Thai", "IBM Plex Sans Thai", "Sarabun", "Segoe UI",
+    system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-num: "Segoe UI", system-ui, sans-serif;
+
+  --fs-2xs: 0.6875rem; /* 11px */
+  --fs-xs: 0.75rem;    /* 12px */
+  --fs-sm: 0.8125rem;  /* 13px */
+  --fs-md: 0.9375rem;  /* 15px */
+  --fs-lg: 1.0625rem;  /* 17px */
+  --fs-xl: 1.25rem;    /* 20px */
+  --fs-2xl: 1.5rem;    /* 24px */
+  --fs-3xl: 1.875rem;  /* 30px */
+  --fs-4xl: 2.375rem;  /* 38px */
+  --fs-5xl: 3rem;      /* 48px */
+
+  --lh-tight: 1.25;
+  --lh-snug: 1.4;
+  --lh-base: 1.65; /* Thai-safe */
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ---- Spacing scale ---------------------------------------------------- */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.25rem;
+  --s-6: 1.5rem;
+  --s-7: 2rem;
+  --s-8: 2.5rem;
+  --s-9: 3rem;
+  --s-10: 4rem;
+
+  /* ---- Radius ----------------------------------------------------------- */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* ---- Elevation (soft depth, no heavy decoration) --------------------- */
+  --e-1: 0 1px 2px rgba(6, 38, 58, 0.06), 0 1px 3px rgba(6, 38, 58, 0.05);
+  --e-2: 0 2px 4px rgba(6, 38, 58, 0.06), 0 4px 12px rgba(6, 38, 58, 0.07);
+  --e-3: 0 6px 14px rgba(6, 38, 58, 0.09), 0 14px 32px rgba(6, 38, 58, 0.10);
+  --e-4: 0 18px 48px rgba(6, 38, 58, 0.18);
+  --e-inset: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+
+  /* ---- Focus ring (always visible, never removed) — R68.2 -------------- */
+  --focus: 0 0 0 3px rgba(15, 108, 140, 0.28), 0 0 0 1.5px var(--pc-700);
+
+  /* ---- Motion ----------------------------------------------------------- */
+  --dur-1: 110ms;
+  --dur-2: 180ms;
+  --dur-3: 280ms;
+  --ease: cubic-bezier(0.32, 0.72, 0.32, 1);
+
+  /* ---- Ergonomics ------------------------------------------------------- */
+  --tap: 44px;        /* touch minimum (R65.3) */
+  --tap-kiosk: 72px;  /* kiosk primary actions (R65.3) */
+  --field-h: 44px;
+  --container: 1200px;
+  --container-narrow: 760px;
+  --container-wide: 1560px;
+
+  /* ---- Layer order ------------------------------------------------------ */
+  --z-sticky: 20;
+  --z-header: 40;
+  --z-drawer: 60;
+  --z-overlay: 80;
+  --z-dialog: 90;
+  --z-toast: 100;
+}
+
+/* Kiosk channel: same design system, larger ergonomics (R65.2, R33.2) */
+[data-channel="KIOSK"] {
+  --fs-md: 1.125rem;
+  --fs-lg: 1.375rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: 2.125rem;
+  --fs-3xl: 2.75rem;
+  --fs-4xl: 3.5rem;
+  --tap: var(--tap-kiosk);
+  --field-h: 72px;
+  --r-md: 14px;
+  --r-lg: 18px;
+}
+
+/* Back office: denser, data-oriented (R63.6) */
+[data-channel="BACKOFFICE"] {
+  --fs-md: 0.875rem;
+  --lh-base: 1.5;
+  --container: var(--container-wide);
+}
+
+/* Reduced motion (R68.8) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+  }
+}

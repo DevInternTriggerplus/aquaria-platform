@@ -1,0 +1,456 @@
+/* Reporting, analytics and dashboards.
+ *
+ * A separate stylesheet from styles.css: the booking flow and the analytics
+ * screens share tokens and nothing else, and 700 more lines in one file makes
+ * both harder to reason about. Every colour, radius and shadow below comes from
+ * the tokens styles.css already defines, so the two surfaces cannot drift.
+ *
+ * Design direction (reportDashboard.md, reports.md): premium and clean, generous
+ * whitespace, elegant cards, rounded corners, soft shadows, Peacock Blue used for
+ * hierarchy and emphasis rather than on every element. Charts stay flat and
+ * readable; the depth lives in the icons.
+ *
+ * Colour is never the only cue. Status badges always carry their text, alerts
+ * always carry a severity word, and the heatmap prints values in its busiest
+ * cells (R68.4).
+ */
+
+/* --------------------------------------------------------------- tokens */
+
+#view-reports {
+  --rp-ink: #102a43;
+  --rp-soft: #627d98;
+  --rp-line: #dbe6ee;
+  --rp-card: #ffffff;
+  --rp-bg: #f4f8fb;
+  --rp-peacock: #00677f;
+  --rp-peacock-deep: #003b4d;
+  --rp-teal: #26c6da;
+  --rp-good: #16856a;
+  --rp-warn: #a76a00;
+  --rp-bad: #b3261e;
+  --rp-radius: 16px;
+  --rp-radius-sm: 10px;
+  --rp-shadow: 0 1px 2px rgba(16, 42, 67, .05), 0 8px 24px rgba(16, 42, 67, .06);
+}
+
+/* ---------------------------------------------------------------- shell */
+
+.rp-shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.rp-side-wrap { position: sticky; top: 16px; }
+
+.rp-side {
+  background: var(--rp-card);
+  border: 1px solid var(--rp-line);
+  border-radius: var(--rp-radius);
+  box-shadow: var(--rp-shadow);
+  padding: 14px 10px;
+}
+
+.rp-side-group {
+  margin: 12px 10px 6px;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--rp-soft);
+}
+.rp-side-group:first-child { margin-top: 2px; }
+
+.rp-side-list { list-style: none; margin: 0 0 6px; padding: 0; }
+
+.rp-side-link {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 8px 10px; margin: 1px 0;
+  border: 0; border-radius: var(--rp-radius-sm);
+  background: transparent; color: var(--rp-ink);
+  font: inherit; font-size: .86rem; text-align: left; cursor: pointer;
+}
+.rp-side-link:hover { background: #eef6f9; }
+.rp-side-link.is-active {
+  /* Peacock for the active state — one of the few places it earns the emphasis. */
+  background: var(--rp-peacock); color: #fff; font-weight: 650;
+}
+.rp-side-link.is-active .rp-side-icon .uic { color: #fff; }
+.rp-side-link:focus-visible { outline: 2px solid var(--rp-peacock); outline-offset: 2px; }
+
+.rp-main { min-width: 0; }
+
+.rp-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 18px; margin-bottom: 14px;
+}
+.rp-head h2 { margin: 0 0 3px; font-size: 1.5rem; color: var(--rp-peacock-deep); }
+.rp-head .hint { margin: 0; max-width: 62ch; }
+
+.rp-crumb { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-size: .82rem; }
+.crumb {
+  border: 0; background: none; padding: 2px 0; color: var(--rp-peacock);
+  font: inherit; cursor: pointer; text-decoration: underline;
+}
+.crumb.is-current { color: var(--rp-soft); text-decoration: none; cursor: default; }
+.crumb-sep { color: var(--rp-soft); }
+
+.rp-export { display: flex; gap: 8px; flex: none; }
+.rp-export .ghost { text-decoration: none; white-space: nowrap; }
+
+.rp-meta { margin: 0 0 16px; font-size: .78rem; color: var(--rp-soft); }
+
+/* -------------------------------------------------------------- filters */
+
+.rp-filter-wrap { margin-bottom: 12px; }
+
+.rp-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+
+.rp-field { display: flex; flex-direction: column; gap: 3px; }
+.rp-field-label {
+  font-size: .68rem; font-weight: 750; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--rp-soft);
+}
+.rp-field select, .rp-field input {
+  min-height: 38px; padding: 6px 10px;
+  border: 1px solid var(--rp-line); border-radius: var(--rp-radius-sm);
+  background: var(--rp-card); color: var(--rp-ink); font: inherit; font-size: .86rem;
+}
+.rp-field select:focus-visible, .rp-field input:focus-visible {
+  outline: 2px solid var(--rp-peacock); outline-offset: 1px;
+}
+
+/* Active filters as removable chips, so nothing is silently excluded. */
+.rp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.rp-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border: 1px solid #bcd9e2; border-radius: 999px;
+  background: #eaf6f9; color: var(--rp-peacock-deep);
+  font: inherit; font-size: .78rem; cursor: pointer;
+}
+.rp-chip:hover { background: #ddeef4; }
+.rp-chip-x { font-size: 1rem; line-height: 1; color: var(--rp-soft); }
+
+/* ------------------------------------------------------------ kpi cards */
+
+.kpi-grid {
+  display: grid; gap: 12px; margin-bottom: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+}
+.kpi-grid-tight { grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); }
+
+.kpi, .tile {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 15px;
+  background: var(--rp-card);
+  border: 1px solid var(--rp-line);
+  border-radius: var(--rp-radius);
+  box-shadow: var(--rp-shadow);
+  text-align: left; font: inherit; color: var(--rp-ink);
+}
+.kpi { cursor: pointer; }
+.kpi:disabled { cursor: default; }
+.kpi:not(:disabled):hover { border-color: #a8cdd8; transform: translateY(-1px); }
+.kpi { transition: transform .12s ease, border-color .12s ease; }
+.kpi:focus-visible { outline: 2px solid var(--rp-peacock); outline-offset: 2px; }
+
+.kpi-label {
+  font-size: .72rem; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--rp-soft);
+}
+.kpi-value { font-size: 1.42rem; font-weight: 800; color: var(--rp-peacock-deep); line-height: 1.15; }
+.kpi-trend { font-size: .78rem; font-weight: 700; }
+.kpi-trend.is-good { color: var(--rp-good); }
+.kpi-trend.is-bad { color: var(--rp-bad); }
+.kpi-compare { font-size: .7rem; color: var(--rp-soft); }
+
+/* Operational tiles carry a tone, but the number and label do the talking. */
+.tile-warn { border-left: 3px solid var(--rp-warn); }
+
+/* Topic-icon tiles host the shared SVG symbols (designIcon.md). The tile treatment
+   itself is the .uic-tile rule (backoffice.css); here we only size each placement.
+   A recognizable symbol now sits on the tile, replacing the old colour-only square. */
+.kpi-icon { width: 30px; height: 30px; flex: none; margin-bottom: 6px; }
+.rp-side-icon {
+  width: 20px; height: 20px; flex: none; display: inline-grid; place-items: center;
+}
+.rp-side-icon .uic { color: var(--rp-soft); }
+.rp-empty-icon, .rp-allclear-icon { width: 40px; height: 40px; margin: 0 auto 10px; }
+.rp-panel-ico { width: 24px; height: 24px; flex: none; }
+.rp-side-group-ico { width: 22px; height: 22px; flex: none; }
+
+/* --------------------------------------------------------------- panels */
+
+.rp-row { display: grid; gap: 14px; margin-bottom: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rp-row-wide { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); }
+
+.rp-panel {
+  background: var(--rp-card);
+  border: 1px solid var(--rp-line);
+  border-radius: var(--rp-radius);
+  box-shadow: var(--rp-shadow);
+  padding: 16px 18px 18px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+.rp-row .rp-panel { margin-bottom: 0; }
+
+.rp-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.rp-panel-head h3 {
+  margin: 0; font-size: .82rem; font-weight: 800;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--rp-peacock);
+}
+
+/* --------------------------------------------------------------- charts */
+
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.ch-grid { stroke: #eaf0f5; stroke-width: 1; }
+.ch-axis { fill: var(--rp-soft); font-size: 10px; font-family: inherit; }
+.ch-line { stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.ch-dot { stroke: #fff; stroke-width: 1; }
+
+/* A restrained series palette: four hues, no gradients inside the plot. */
+.ch-s0 { stroke: #00677f; fill: #00677f; }
+.ch-s1 { stroke: #d97706; fill: #d97706; }
+.ch-s2 { stroke: #b3261e; fill: #b3261e; }
+.ch-s3 { stroke: #16856a; fill: #16856a; }
+
+.ch-legend { display: flex; gap: 14px; flex-wrap: wrap; }
+.ch-key { display: inline-flex; align-items: center; gap: 6px; font-size: .76rem; color: var(--rp-soft); }
+.ch-swatch { width: 11px; height: 3px; border-radius: 2px; display: inline-block; }
+.ch-swatch.ch-s0 { background: #00677f; }
+.ch-swatch.ch-s1 { background: #d97706; }
+.ch-swatch.ch-s2 { background: #b3261e; }
+.ch-swatch.ch-s3 { background: #16856a; }
+
+.bars { display: grid; gap: 12px; }
+.bar-head { display: flex; justify-content: space-between; gap: 12px; font-size: .84rem; margin-bottom: 4px; }
+.bar-label { font-weight: 600; color: var(--rp-ink); }
+.bar-value { font-weight: 750; color: var(--rp-peacock-deep); white-space: nowrap; }
+.bar-track { height: 8px; border-radius: 999px; background: #eef3f7; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; background: var(--rp-peacock); }
+.bar-note { margin-top: 3px; font-size: .72rem; color: var(--rp-soft); }
+.ch-b0 { background: #00677f; }
+.ch-b1 { background: #d97706; }
+.ch-b2 { background: #b3261e; }
+.ch-b3 { background: #16856a; }
+.ch-b4 { background: #6b7fd7; }
+
+.cap-panel { text-align: center; }
+.cap-figure { font-size: 2rem; font-weight: 800; color: var(--rp-peacock-deep); }
+.cap-track { margin: 10px 0 14px; height: 10px; }
+.cap-stats {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 14px; margin: 0; text-align: left; font-size: .82rem;
+}
+.cap-stats dt { color: var(--rp-soft); }
+.cap-stats dd { margin: 0 0 6px; font-weight: 700; }
+
+/* Heatmap. Intensity is a single hue ramp; busy cells also print their number so
+   the reading never depends on colour perception alone. */
+.heat { overflow-x: auto; }
+.heat-table { border-collapse: separate; border-spacing: 2px; font-size: .68rem; }
+.heat-table th { color: var(--rp-soft); font-weight: 700; padding: 2px 4px; }
+.heat-corner { min-width: 34px; }
+.heat-cell {
+  width: 24px; height: 20px; border-radius: 4px; text-align: center;
+  color: #06323d; font-weight: 700;
+  background: color-mix(in srgb, #00677f calc(var(--i, 0) * 100%), #eef4f7);
+}
+
+/* ---------------------------------------------------------------- tables */
+
+/* Report tables (designReports.md): a white, rounded, softly-shadowed card the eye
+   can read for a long session. Comfortable row height, subtle 1px separators (no cell
+   grid), a light header, right-aligned tabular money. Colour stays out of the way so
+   the data is the focus. One shared style — every report table is .rp-table, so the
+   look cannot drift table to table. */
+.rp-table-wrap {
+  overflow-x: auto;
+  background: var(--rp-card);
+  border: 1px solid #e3ebf1;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 45, 65, .05);
+}
+.rp-table {
+  width: 100%; border-collapse: collapse;
+  font-size: .875rem;                    /* ~14px body, comfortable to read */
+  color: #1f2937;                        /* dark navy, not pure black */
+  font-variant-numeric: tabular-nums;    /* columns of figures line up */
+}
+.rp-table th {
+  position: sticky; top: 0; z-index: 1;
+  padding: 12px 16px; text-align: left; white-space: nowrap;
+  background: #f6f9fb;                    /* very light, not a dark bar */
+  border-bottom: 1px solid #e3ebf1;
+  font-size: .8rem; font-weight: 700; letter-spacing: .01em;
+  text-transform: none;                  /* readable, not shouty all-caps */
+  color: #102a43;
+}
+.rp-table td {
+  padding: 13px 16px;                    /* ~48px row height with the line-height */
+  border-bottom: 1px solid #eef3f7;      /* barely-there separator */
+  color: #1f2937;
+}
+.rp-table tbody tr:last-child td { border-bottom: 0; }
+.rp-table th.r, .rp-table td.r { text-align: right; }
+/* Financial and numeric cells: right-aligned, tabular, slightly heavier so amounts
+   are easy to compare down a column (designReports §10). */
+.rp-table td.r { font-variant-numeric: tabular-nums; font-weight: 600; color: #0f2233; }
+.rp-table tbody tr { transition: background-color .1s ease; }
+.rp-table tbody tr:hover { background: #f3fafc; }   /* soft peacock wash, never dark */
+.rp-table tfoot td {
+  padding: 13px 16px; border-top: 1px solid #d7e3ec; border-bottom: 0;
+  background: #fbfdfe;
+  font-weight: 800; color: var(--rp-peacock-deep);
+}
+/* Operational sub-tables can sit a little tighter, but never cramped. */
+.rp-table-compact td, .rp-table-compact th { padding: 9px 12px; }
+.rp-table-compact { font-size: .84rem; }
+
+.rp-reconcile {
+  margin: 12px 0 0; padding: 10px 12px;
+  border-left: 3px solid var(--rp-peacock);
+  background: #f2f9fb; border-radius: 0 var(--rp-radius-sm) var(--rp-radius-sm) 0;
+  font-size: .78rem; color: var(--rp-ink);
+}
+
+/* Status badges always carry their text (R68.4). */
+.st {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: .72rem; font-weight: 700; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.st-good { background: #e6f6f1; color: #0f6b56; border-color: #b9e4d8; }
+.st-warn { background: #fdf3e2; color: #8a5800; border-color: #f0d9a8; }
+.st-bad { background: #fdeceb; color: #932019; border-color: #f3c4c0; }
+.st-neutral { background: #eef2f6; color: #48607a; border-color: #dbe3ec; }
+
+.rp-inline-counts { display: flex; gap: 8px; flex-wrap: wrap; }
+.count-chip {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  padding: 4px 10px; border-radius: 999px;
+  background: #eef6f9; border: 1px solid #cfe5ec;
+  font-size: .76rem; color: var(--rp-peacock-deep);
+}
+.count-chip strong { font-size: .92rem; }
+
+/* ---------------------------------------------------------------- alerts */
+
+.alerts { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.alert {
+  padding: 11px 13px; border-radius: var(--rp-radius-sm);
+  border: 1px solid var(--rp-line); border-left-width: 3px; background: #fbfdfe;
+}
+/* Red is reserved for genuinely critical findings; a high refund rate is amber. */
+.alert-critical { border-left-color: var(--rp-bad); background: #fdf7f6; }
+.alert-warning { border-left-color: var(--rp-warn); background: #fdfaf4; }
+.alert-information { border-left-color: var(--rp-peacock); background: #f6fbfc; }
+
+.alert-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.alert-sev {
+  font-size: .64rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px; background: #eef2f6; color: #48607a;
+}
+.alert-critical .alert-sev { background: #fdeceb; color: #932019; }
+.alert-warning .alert-sev { background: #fdf3e2; color: #8a5800; }
+.alert-title { font-size: .9rem; }
+.alert-metric { margin-left: auto; font-weight: 800; color: var(--rp-peacock-deep); }
+.alert-detail { margin: 5px 0 0; font-size: .82rem; color: var(--rp-ink); }
+.alert-action { margin: 4px 0 0; font-size: .78rem; color: var(--rp-soft); }
+
+.link-btn {
+  margin-top: 7px; border: 0; background: none; padding: 0;
+  color: var(--rp-peacock); font: inherit; font-size: .78rem;
+  text-decoration: underline; cursor: pointer;
+}
+
+.rp-allclear { text-align: center; padding: 16px 8px; color: var(--rp-soft); }
+.rp-allclear p { margin: 0; font-size: .86rem; }
+
+/* -------------------------------------------- empty, loading, error states */
+
+.rp-empty, .rp-error { text-align: center; padding: 28px 16px; }
+.rp-empty-title { margin: 0 0 4px; font-weight: 700; color: var(--rp-ink); }
+.rp-empty-actions { margin-top: 12px; display: flex; gap: 8px; justify-content: center; }
+.rp-error .primary { margin-top: 12px; }
+.rp-ref { font-size: .72rem; color: var(--rp-soft); font-family: ui-monospace, monospace; }
+
+/* Skeletons keep the layout still while data lands, rather than a spinner that
+   throws the whole page away. */
+.rp-skeleton { display: grid; gap: 10px; padding: 6px 0; }
+.sk-line {
+  height: 46px; border-radius: var(--rp-radius-sm);
+  background: linear-gradient(90deg, #eef3f7 25%, #f7fafc 37%, #eef3f7 63%);
+  background-size: 400% 100%;
+  animation: sk 1.4s ease infinite;
+}
+@keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) {
+  .sk-line { animation: none; }
+  .kpi { transition: none; }
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 1020px) {
+  .rp-shell { grid-template-columns: 1fr; }
+  .rp-side-wrap { position: static; }
+  /* The sidebar becomes a horizontal strip rather than shrinking to unusable. */
+  .rp-side { display: flex; gap: 8px; overflow-x: auto; padding: 10px; }
+  .rp-side-group { display: none; }
+  .rp-side-list { display: flex; gap: 6px; margin: 0; }
+  .rp-side-link { white-space: nowrap; }
+  .rp-row, .rp-row-wide { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  /* Mobile priority per the brief: revenue, visitors, capacity, alerts first. */
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-value { font-size: 1.2rem; }
+  .rp-head { flex-direction: column; }
+  .rp-filters { gap: 8px; }
+  .rp-field { flex: 1 1 132px; }
+  .rp-field select, .rp-field input { min-height: 44px; }
+  .rp-side-link { min-height: 44px; }
+}
+
+@media print {
+  .rp-side-wrap, .rp-filter-wrap, .rp-export, .rp-crumb { display: none !important; }
+  .rp-shell { grid-template-columns: 1fr; }
+  .rp-panel { box-shadow: none; break-inside: avoid; }
+}
+
+/* ------------------------------------------------- shared topic icons in reports
+ * The .uic icon system is defined in backoffice.css; here we only point its custom
+ * properties at the report palette so an icon inside a report reads in the same
+ * peacock/teal as one in Settings, and size the tile variants the report screens use.
+ */
+#view-reports {
+  --primary: var(--rp-peacock);
+  --primary-soft: #e9f6f9;
+  --accent-fill: rgba(38, 198, 218, .18);
+  --line: var(--rp-line);
+  --ok: var(--rp-good);
+  --warn: var(--rp-warn);
+  --danger: var(--rp-bad);
+  --muted: var(--rp-soft);
+}
+/* The report sidebar icons are not tiles (they sit inline in a text link), so they
+   default to the soft ink and light up peacock on hover/active. Card and panel tiles
+   keep the tile treatment from .uic-tile. */
+#view-reports .rp-side-icon .uic { color: var(--rp-soft); }
+#view-reports .rp-side-link:hover .rp-side-icon .uic { color: var(--rp-peacock); }
+#view-reports .rp-side-link.is-active .rp-side-icon .uic { color: #fff; }
+
+/* Section-group header: icon + label on one line. */
+.rp-side-group { display: flex; align-items: center; gap: 8px; }
+.rp-side-group-ico { border-radius: 7px; }
+
+/* Panel heading: icon tile + uppercase label aligned. */
+.rp-panel-head h3 { display: flex; align-items: center; gap: 9px; }

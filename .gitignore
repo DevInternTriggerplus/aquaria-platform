@@ -1,0 +1,47 @@
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+backend/local-fallback.sqlite3
+backend/staticfiles/
+backend/media/
+
+# --- Node / Next ---
+node_modules/
+.next/
+out/
+next-env.d.ts
+.vercel
+.neon/
+*.tsbuildinfo
+
+# --- Flutter / Dart ---
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# --- Environment: never commit real secrets ---
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# --- Legacy demo database and scratch output ---
+/data/
+legacy-stdlib/data/
+_probe.py
+run1.txt
+out.txt
+err.txt
+
+# --- Editors / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

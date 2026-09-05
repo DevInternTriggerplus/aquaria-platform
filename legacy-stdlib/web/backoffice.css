@@ -1,0 +1,789 @@
+/* Back office: login, shell, Settings home and the permission matrix.
+ *
+ * Reuses the tokens declared in styles.css (peacock palette, radii, shadows) rather
+ * than redeclaring them, so the staff screens and the guest booking flow stay one
+ * product. Nothing here is loaded from another origin: no font file, no icon font,
+ * no background image. Every icon is drawn with CSS, which is also why the CSP does
+ * not need loosening.
+ *
+ * Two accessibility rules hold throughout, matching the booking UI:
+ *   - colour is never the only cue; every state carries a glyph or a label;
+ *   - interactive targets are at least var(--tap).
+ */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.link-btn {
+  background: none; border: 0; padding: 0; font: inherit; color: var(--primary);
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.link-btn:hover { color: var(--primary-deep); }
+
+/* While a protected screen is open the guest chrome is noise, so the hero and the
+   customer language picker step back. The header stays: it carries the venue name,
+   which is the one piece of context a staff screen also wants. */
+body.is-backoffice .hero { display: none; }
+body.is-backoffice .lang-picker { opacity: .85; }
+
+/* ============================================================== login (§2) */
+
+.lg-wrap {
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 32px 0 64px;
+}
+
+.lg-card {
+  width: 100%; max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  padding: 32px 28px 26px;
+}
+
+.lg-brand { display: flex; justify-content: center; margin-bottom: 14px; }
+.lg-brand .brand-mark { width: 44px; height: 44px; }
+
+.lg-title {
+  margin: 0 0 6px; text-align: center; font-size: 1.6rem; color: var(--primary-deep);
+}
+.lg-lead {
+  margin: 0 0 22px; text-align: center; color: var(--ink-soft); font-size: .95rem;
+}
+
+/* One notice line, used for "please sign in to continue", "your session has
+   expired" and whatever the server said about a failed attempt. Never a stack
+   trace: the server sends business language and this shows it verbatim. */
+.lg-notice {
+  margin: 0 0 18px; padding: 11px 14px;
+  border: 1px solid var(--warn); border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft); color: var(--accent-ink);
+  font-size: .9rem;
+}
+
+.lg-pass { display: flex; gap: 8px; align-items: stretch; }
+.lg-pass input { flex: 1 1 auto; }
+
+.lg-eye {
+  flex: 0 0 auto; width: var(--tap); min-height: var(--tap);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-alt); cursor: pointer;
+  display: grid; place-items: center;
+}
+.lg-eye:hover { border-color: var(--primary); }
+/* An eye drawn from two shapes: an ellipse outline and a pupil. Filled when the
+   password is visible, so the control's state is legible without colour. */
+.lg-eye-icon {
+  width: 20px; height: 12px; border: 2px solid var(--primary-deep);
+  border-radius: 50% / 60%; position: relative;
+}
+.lg-eye-icon::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--primary-deep);
+}
+.lg-eye[aria-pressed="true"] .lg-eye-icon { background: var(--primary-soft); }
+
+.lg-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin: 4px 0 20px;
+}
+.lg-check { display: flex; align-items: center; gap: 8px; font-size: .9rem; min-height: var(--tap); }
+.lg-check input { width: 18px; height: 18px; }
+
+.lg-submit { width: 100%; }
+.lg-foot { text-align: center; margin: 16px 0 0; }
+
+/* ================================================================== shell */
+
+.bo-shell {
+  display: grid; grid-template-columns: 264px minmax(0, 1fr);
+  gap: 24px; align-items: start; padding: 20px 0 56px;
+}
+
+.bo-side {
+  position: sticky; top: 16px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: 16px 12px; max-height: calc(100vh - 32px); overflow-y: auto;
+}
+
+.bo-side-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 12px;
+}
+.bo-side-title { font-family: var(--font-display); font-size: 1.15rem; color: var(--primary-deep); }
+.bo-logo {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(140deg, var(--primary), var(--primary-deep));
+}
+.bo-side-empty { padding: 8px; color: var(--muted); font-size: .9rem; }
+
+.bo-nav ul { list-style: none; margin: 0; padding: 0; }
+.bo-nav-settings { margin-top: 14px; }
+
+.bo-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 38px; padding: 8px 10px;
+  border: 0; border-radius: var(--radius-sm);
+  background: none; color: var(--ink); font: inherit; font-size: .92rem;
+  text-align: left; cursor: pointer;
+}
+.bo-link:hover { background: var(--surface-alt); }
+.bo-link.is-active {
+  background: var(--primary-soft); color: var(--primary-deep); font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.bo-link-all { font-weight: 600; margin-bottom: 6px; }
+
+/* A small topic glyph leads each settings page link (§4, §32). It is muted until the
+   row is active or hovered, so the icons guide without shouting. */
+.bo-link-ico { flex: 0 0 auto; display: inline-grid; place-items: center; width: 18px; }
+.bo-link-ico .uic { color: var(--muted); }
+.bo-link:hover .bo-link-ico .uic,
+.bo-link.is-active .bo-link-ico .uic { color: var(--primary); }
+.bo-link-label { flex: 1 1 auto; min-width: 0; }
+.bo-group .bo-link { gap: 8px; }
+
+/* "View only" marker on a page the signed-in user cannot change. A label, not a
+   colour, so the distinction survives a greyscale print and a colour-blind reader
+   (§16 read-only mode made visible before the page is opened). */
+.bo-ro {
+  flex: 0 0 auto; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--ink-soft); border: 1px solid var(--line); border-radius: 999px;
+  padding: 1px 7px; background: var(--surface-alt);
+}
+
+.bo-group > summary {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 38px; padding: 8px 10px; cursor: pointer;
+  border-radius: var(--radius-sm); font-size: .92rem; font-weight: 600;
+  color: var(--primary-deep); list-style: none;
+}
+.bo-group > summary::-webkit-details-marker { display: none; }
+.bo-group > summary::after {
+  content: ""; margin-left: auto; width: 7px; height: 7px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform .15s ease;
+}
+.bo-group[open] > summary::after { transform: rotate(45deg); }
+.bo-group > summary:hover { background: var(--surface-alt); }
+.bo-group ul { padding-left: 10px; border-left: 1px solid var(--line); margin-left: 14px; }
+.bo-group .bo-link { font-size: .88rem; min-height: 34px; }
+
+.bo-count {
+  font-size: .72rem; color: var(--ink-soft); background: var(--surface-alt);
+  border-radius: 999px; padding: 1px 7px; margin-left: auto;
+}
+.bo-group > summary::after { margin-left: 6px; }
+
+.bo-main { min-width: 0; }
+
+.bo-topbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: 12px 16px; margin-bottom: 16px;
+}
+
+.bo-burger { display: none; }
+
+/* Scope banner (§34). Three facts, always visible, so an administrator is never
+   unsure which organization and venue they are about to change. */
+.bo-scope { display: flex; gap: 20px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+.bo-scope-item { display: flex; flex-direction: column; min-width: 0; }
+.bo-scope-item small {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+}
+.bo-scope-item strong {
+  font-size: .92rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.bo-user > summary {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  min-height: var(--tap); padding: 4px 8px; border-radius: var(--radius-sm);
+  list-style: none;
+}
+.bo-user > summary::-webkit-details-marker { display: none; }
+.bo-user > summary:hover { background: var(--surface-alt); }
+.bo-avatar {
+  width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%;
+  display: grid; place-items: center; text-transform: uppercase;
+  background: linear-gradient(140deg, var(--primary), var(--primary-deep));
+  color: #fff; font-weight: 700;
+}
+.bo-user-text { display: flex; flex-direction: column; line-height: 1.25; }
+.bo-user-text strong { font-size: .9rem; }
+.bo-user-text small { font-size: .74rem; color: var(--muted); }
+
+.bo-user { position: relative; }
+.bo-user-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 220px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 8px;
+}
+.bo-user-meta { margin: 4px 8px 8px; font-size: .8rem; color: var(--muted); word-break: break-all; }
+.bo-user-item {
+  display: block; width: 100%; min-height: 40px; text-align: left;
+  padding: 8px 10px; border: 0; border-radius: var(--radius-sm);
+  background: none; font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
+}
+.bo-user-item:hover { background: var(--surface-alt); }
+.bo-user-item.is-danger { color: var(--danger); }
+
+.bo-crumb {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 14px; font-size: .86rem; color: var(--ink-soft);
+}
+.bo-crumb-sep { color: var(--line); }
+
+.bo-body { min-height: 40vh; }
+
+.bo-head { margin-bottom: 18px; }
+.bo-head h2 {
+  margin: 0 0 6px; font-size: 1.6rem; color: var(--primary-deep);
+  display: flex; align-items: center; gap: 10px;
+}
+.bo-lead { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+.bo-loading { color: var(--muted); }
+
+.bo-banner {
+  margin: 0 0 18px; padding: 11px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); border-left-width: 4px; font-size: .9rem;
+}
+.bo-banner.is-info { background: var(--primary-soft); border-left-color: var(--primary); }
+.bo-banner.is-warn { background: var(--warn-soft); border-left-color: var(--warn); }
+.bo-banner.is-note { background: var(--surface-alt); border-left-color: var(--muted); }
+
+/* ====================================================== settings home (§11) */
+
+.bo-search { position: relative; margin-bottom: 18px; }
+.bo-search input {
+  width: 100%; min-height: var(--tap); padding: 10px 14px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); font: inherit;
+}
+.bo-search input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.bo-search-out {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: 6px; max-height: 340px; overflow-y: auto;
+}
+.bo-result {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px;
+  padding: 8px 10px; border: 0; border-radius: var(--radius-sm);
+  background: none; font: inherit; text-align: left; cursor: pointer;
+}
+.bo-result:hover { background: var(--surface-alt); }
+.bo-result-ico { flex: 0 0 auto; display: inline-grid; place-items: center; width: 20px; }
+.bo-result-ico .uic { color: var(--primary); }
+.bo-result-text { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bo-result-cat { font-size: .76rem; color: var(--muted); flex: 0 0 auto; }
+.bo-result-cat::after { content: " \203A"; }
+.bo-result-page { font-weight: 600; font-size: .92rem; }
+.bo-result-empty { margin: 8px 10px; color: var(--muted); font-size: .9rem; }
+
+.bo-recent { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.bo-recent-label { font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.bo-chip {
+  min-height: 34px; padding: 6px 12px; border: 1px solid var(--line);
+  border-radius: 999px; background: var(--surface); font: inherit; font-size: .85rem;
+  cursor: pointer;
+}
+.bo-chip:hover { border-color: var(--primary); color: var(--primary-deep); }
+
+.bo-cards {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.bo-card {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr) auto;
+  grid-template-areas: "ico text go" "ico meta go";
+  gap: 4px 14px; align-items: center;
+  padding: 18px; text-align: left; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  font: inherit; color: inherit;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.bo-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+.bo-card-text { grid-area: text; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bo-card-text strong { font-family: var(--font-display); font-size: 1.05rem; color: var(--primary-deep); }
+.bo-card-text small { color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
+.bo-card-status {
+  font-style: normal; font-size: .82rem; font-weight: 600; color: var(--primary);
+  margin-top: 4px;
+}
+.bo-card-meta { grid-area: meta; font-size: .76rem; color: var(--muted); }
+.bo-card-go {
+  grid-area: go; width: 9px; height: 9px;
+  border-right: 2px solid var(--muted); border-top: 2px solid var(--muted);
+  transform: rotate(45deg);
+}
+.bo-card:hover .bo-card-go { border-color: var(--primary); }
+
+/* Icon tiles that host a shared topic SVG (designIcon.md). The tile styling lives in
+   the .uic-tile rule; here we only give each context its size and grid slot. The
+   recognizable symbol now comes from the icon sprite, not from CSS border geometry. */
+.bo-card-ico { grid-area: ico; width: 46px; height: 46px; }
+.bo-head-ico { width: 34px; height: 34px; margin-right: 4px; }
+.bo-ico { width: 24px; height: 24px; border-radius: 7px; }
+
+/* =================================================== category page listing */
+
+.bo-pagelist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bo-pagerow {
+  display: flex; align-items: center; gap: 16px; width: 100%;
+  padding: 14px 16px; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.bo-pagerow:hover { border-color: var(--primary); }
+.bo-pagerow-ico { flex: 0 0 auto; width: 40px; height: 40px; }
+.bo-pagerow-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bo-pagerow-main strong { font-size: .98rem; }
+.bo-pagerow-main small { color: var(--ink-soft); font-size: .82rem; }
+
+/* The four verbs as four fixed slots, so a row is scannable and "not applicable"
+   is visibly different from "not granted" (§9, §13). */
+.bo-verbs { display: flex; gap: 5px; flex: 0 0 auto; }
+.bo-verb {
+  width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: var(--surface-alt);
+  font-size: .72rem; font-weight: 700; color: var(--muted);
+}
+.bo-verb.is-on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.bo-verb.is-na { border-style: dashed; color: var(--line); background: none; }
+.bo-verbs-lg .bo-verb { width: 30px; height: 30px; font-size: .8rem; }
+
+/* ========================================================= settings pages */
+
+.bo-panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: 20px 20px 22px; margin-bottom: 18px;
+}
+.bo-panel-h {
+  margin: 0 0 14px; font-family: var(--font); font-size: .76rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--primary);
+}
+.bo-panel-h + .bo-panel-h { margin-top: 24px; }
+
+.bo-field { margin-bottom: 18px; }
+.bo-field > label, .bo-field > legend {
+  display: block; margin-bottom: 6px; font-size: .88rem; font-weight: 600;
+}
+.bo-field input[type="text"], .bo-field input[type="number"], .bo-field input[type="date"],
+.bo-field select {
+  min-height: var(--tap); padding: 9px 12px; width: 100%; max-width: 340px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface); font: inherit; color: var(--ink);
+}
+.bo-field input:disabled, .bo-field select:disabled {
+  background: var(--surface-alt); color: var(--ink-soft); cursor: not-allowed;
+}
+.bo-field fieldset { border: 0; padding: 0; margin: 0; }
+.bo-field .hint { display: block; margin-top: 6px; color: var(--ink-soft); font-size: .82rem; }
+.bo-field-help { margin: 6px 0 0; color: var(--ink-soft); font-size: .82rem; }
+.rp-table td.rp-actions, .rp-table th.rp-actions { text-align: right; white-space: nowrap; }
+.rp-table .rp-actions .ghost.small { margin-left: 6px; }
+.ghost.small.danger { color: var(--danger, #b3261e); border-color: color-mix(in oklab, var(--danger, #b3261e) 40%, transparent); }
+.bo-record-dialog .bo-record-fields { max-height: 60vh; overflow-y: auto; }
+.bo-staff-access { max-width: 720px; width: 92vw; }
+.bo-staff-access-body { max-height: 70vh; overflow-y: auto; }
+.bo-access-section { margin-bottom: 20px; }
+.bo-access-section h4 { margin: 0 0 8px; font-size: .95rem; }
+.bo-access-venue { margin: 12px 0; }
+.bo-access-venue h4 { font-size: .88rem; font-weight: 600; }
+.bo-access-venue h4 small { color: var(--ink-soft); font-weight: 400; margin-left: 6px; }
+.pv-table th, .pv-table td { text-align: center; font-size: .82rem; }
+.pv-table td:first-child, .pv-table th:first-child { text-align: left; }
+.pv-yes { color: var(--success, #16856a); font-weight: 700; }
+.pv-no { color: var(--ink-soft); }
+.pv-na { color: var(--line); }
+.bo-access-assign { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.rp-table td.r, .rp-table th.r { text-align: right; font-variant-numeric: tabular-nums; }
+
+.bo-inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bo-suffix { color: var(--ink-soft); }
+
+.bo-switch { display: flex; align-items: center; gap: 10px; min-height: var(--tap); font-weight: 600; }
+.bo-switch input { width: 20px; height: 20px; }
+
+.bo-radio {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface);
+}
+.bo-radio:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.bo-radio input { margin-top: 3px; width: 18px; height: 18px; }
+.bo-radio span { display: flex; flex-direction: column; gap: 2px; }
+.bo-radio small { color: var(--ink-soft); font-size: .82rem; }
+
+/* Progressive disclosure (§29): the effective date and the audit reason are real
+   fields, but they are not what an administrator came here to change. */
+.bo-advanced { margin: 4px 0 18px; }
+.bo-advanced > summary {
+  cursor: pointer; min-height: var(--tap); display: flex; align-items: center;
+  font-size: .88rem; font-weight: 600; color: var(--primary);
+}
+.bo-advanced[open] > summary { margin-bottom: 12px; }
+
+/* Preview (§41). Server-computed: the client never does money arithmetic. */
+.bo-preview {
+  border-top: 1px solid var(--line); padding-top: 18px; margin-top: 6px;
+}
+.bo-preview-list { margin: 0; }
+.bo-preview-row {
+  display: flex; justify-content: space-between; gap: 20px;
+  padding: 7px 0; border-bottom: 1px dashed var(--line);
+}
+.bo-preview-row dt { color: var(--ink-soft); font-size: .88rem; }
+.bo-preview-row dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bo-preview-row.is-total { border-bottom: 0; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; }
+.bo-preview-row.is-total dt { color: var(--ink); font-weight: 700; }
+.bo-preview-row.is-total dd { font-family: var(--font-display); font-size: 1.2rem; }
+
+.bo-actions {
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  border-top: 1px solid var(--line); padding-top: 18px; margin-top: 4px;
+}
+
+.bo-history { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; }
+.bo-history ul { list-style: none; margin: 0; padding: 0; }
+.bo-history li {
+  display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: .86rem;
+}
+.bo-history li span:first-child { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+.bo-rates { list-style: none; margin: 0 0 18px; padding: 0; }
+.bo-rates li {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 11px 0; border-bottom: 1px solid var(--line);
+}
+.bo-rate-dir { font-weight: 600; font-variant-numeric: tabular-nums; }
+.bo-rate-meta { color: var(--ink-soft); font-size: .82rem; margin-right: auto; }
+.bo-rate-add { border-top: 1px solid var(--line); padding-top: 18px; }
+
+.bo-ptlist { list-style: none; margin: 0; padding: 0; }
+.bo-ptlist li {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.bo-pt-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.bo-pt-main small { color: var(--ink-soft); font-size: .8rem; }
+
+.bo-pill {
+  font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-alt); color: var(--ink-soft);
+}
+.bo-pill.is-on { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+.bo-pill.is-warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+
+.bo-notyet {
+  background: var(--surface-alt); border: 1px dashed var(--line);
+  border-radius: var(--radius-lg); padding: 26px 22px; max-width: 62ch;
+}
+.bo-notyet h3 { margin: 0 0 8px; font-size: 1.05rem; color: var(--primary-deep); }
+.bo-notyet p { margin: 0; color: var(--ink-soft); }
+
+button.small { min-height: 34px; padding: 5px 12px; font-size: .84rem; }
+
+/* ========================================================= access denied (§6) */
+
+.bo-denied {
+  max-width: 46ch; margin: 8vh auto; text-align: center;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow);
+  padding: 40px 28px 34px;
+}
+/* A padlock, drawn: body plus shackle. No icon font, no image request. */
+.bo-denied-ico {
+  display: block; width: 30px; height: 24px; margin: 0 auto 20px; position: relative;
+  border: 2px solid var(--primary-deep); border-radius: 5px; background: var(--primary-soft);
+}
+.bo-denied-ico::before {
+  content: ""; position: absolute; left: 50%; top: -15px; transform: translateX(-50%);
+  width: 16px; height: 15px;
+  border: 2px solid var(--primary-deep); border-bottom: 0; border-radius: 9px 9px 0 0;
+}
+.bo-denied-ico::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 4px; height: 8px; border-radius: 2px; background: var(--primary-deep);
+}
+.bo-denied h2 { margin: 0 0 10px; font-size: 1.3rem; color: var(--primary-deep); }
+.bo-denied p { margin: 0 0 22px; color: var(--ink-soft); }
+.bo-denied-what { font-size: .82rem; color: var(--muted); }
+
+.bo-empty { padding: 40px 0; text-align: center; color: var(--ink-soft); }
+
+/* ==================================================== permission matrix (§19) */
+
+.bo-role-tools {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
+}
+.bo-role-tools input[type="search"] {
+  flex: 1 1 220px; min-height: var(--tap); padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); font: inherit;
+}
+
+.bo-mgroup {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  margin-bottom: 10px; overflow: hidden;
+}
+.bo-mgroup > summary {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  min-height: var(--tap); padding: 10px 16px; list-style: none;
+  font-weight: 600; color: var(--primary-deep); background: var(--surface);
+}
+.bo-mgroup > summary::-webkit-details-marker { display: none; }
+.bo-mgroup > summary:hover { background: var(--surface-alt); }
+
+.bo-mtable { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.bo-mtable th, .bo-mtable td {
+  padding: 8px 12px; border-top: 1px solid var(--line); text-align: left;
+}
+.bo-mtable thead th {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--muted); font-weight: 700; background: var(--surface-alt);
+}
+.bo-mtable thead th:not(:first-child), .bo-mtable td { text-align: center; }
+.bo-mtable tbody th { font-weight: 500; }
+.bo-mtable tbody th { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bo-mpage { font-weight: 600; }
+.bo-mtable td.is-na { color: var(--line); font-weight: 700; }
+
+/* A granted permission is a filled box with a tick drawn from two borders; an
+   ungranted one is an empty outline. Shape carries the state, not colour, and each
+   cell also has an aria-label naming the verb and whether it is held. */
+.bo-check {
+  display: inline-block; width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid var(--line); background: var(--surface); position: relative;
+}
+.bo-check.is-on { border-color: var(--primary); background: var(--primary); }
+.bo-check.is-on::after {
+  content: ""; position: absolute; left: 5px; top: 2px;
+  width: 5px; height: 9px;
+  border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+  transform: rotate(40deg);
+}
+
+.bo-alist { list-style: none; margin: 0; padding: 0; }
+.bo-alist li {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 16px; border-top: 1px solid var(--line);
+}
+.bo-amain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.bo-amain small { color: var(--ink-soft); font-size: .8rem; }
+
+/* ============================================== role summary (§21) + effective */
+
+.bo-summary {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: 20px; margin-top: 18px;
+}
+.bo-summary-grid {
+  display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin-bottom: 20px;
+}
+.bo-summary-grid > div {
+  background: var(--surface-alt); border-radius: var(--radius);
+  padding: 14px; text-align: center;
+}
+.bo-summary-grid strong {
+  display: block; font-family: var(--font-display); font-size: 1.6rem; color: var(--primary-deep);
+}
+.bo-summary-grid small { color: var(--ink-soft); font-size: .8rem; }
+.bo-summary-h {
+  margin: 18px 0 10px; font-size: .76rem; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--muted);
+}
+.bo-sensitive { list-style: none; margin: 0; padding: 0; }
+.bo-sensitive li {
+  display: flex; justify-content: space-between; align-items: center; gap: 14px;
+  padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: .9rem;
+}
+.bo-warnings { margin: 0; padding-left: 20px; color: var(--warn); font-size: .86rem; }
+.bo-warnings li { margin-bottom: 6px; }
+
+.bo-eff {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 20px;
+}
+.bo-eff-meta { margin: 0 0 14px; color: var(--muted); font-size: .86rem; }
+.bo-eff-cats { list-style: none; margin: 0; padding: 0; }
+.bo-eff-cats li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.bo-eff-cats strong { display: block; font-size: .92rem; color: var(--primary-deep); }
+.bo-eff-cats span { font-size: .86rem; color: var(--ink-soft); }
+
+/* ================================================================= confirm */
+
+dialog.bo-confirm {
+  border: 0; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+  padding: 26px; max-width: 440px; width: calc(100% - 32px);
+}
+dialog.bo-confirm::backdrop { background: oklch(0.24 0.055 235 / .45); }
+dialog.bo-confirm h2 { margin: 0 0 16px; font-size: 1.2rem; color: var(--primary-deep); }
+.bo-confirm-body { margin-bottom: 22px; }
+.bo-confirm-row {
+  display: flex; justify-content: space-between; gap: 18px;
+  padding: 9px 0; border-bottom: 1px dashed var(--line);
+}
+.bo-confirm-row span { color: var(--ink-soft); font-size: .86rem; }
+.bo-confirm-row strong { text-align: right; }
+dialog.bo-confirm menu {
+  display: flex; gap: 10px; justify-content: flex-end; margin: 0; padding: 0; list-style: none;
+}
+
+/* ================================================================ responsive */
+
+@media (max-width: 980px) {
+  .bo-shell { grid-template-columns: minmax(0, 1fr); }
+  .bo-side {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 60; width: 280px;
+    max-height: 100vh; border-radius: 0; transform: translateX(-100%);
+    transition: transform .2s ease;
+  }
+  body.bo-side-open .bo-side { transform: none; }
+  .bo-burger {
+    display: grid; place-items: center; flex: 0 0 auto;
+    width: var(--tap); height: var(--tap);
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    background: var(--surface); cursor: pointer;
+  }
+  .bo-burger span[aria-hidden] {
+    width: 18px; height: 2px; background: var(--ink); position: relative;
+  }
+  .bo-burger span[aria-hidden]::before,
+  .bo-burger span[aria-hidden]::after {
+    content: ""; position: absolute; left: 0; width: 18px; height: 2px; background: var(--ink);
+  }
+  .bo-burger span[aria-hidden]::before { top: -6px; }
+  .bo-burger span[aria-hidden]::after { top: 6px; }
+}
+
+@media (max-width: 720px) {
+  .bo-scope { gap: 12px; }
+  .bo-scope-item strong { font-size: .85rem; }
+  .bo-cards { grid-template-columns: minmax(0, 1fr); }
+  /* A 72-row permission matrix cannot shrink usefully, so it scrolls sideways
+     inside its own group rather than squeezing the page. */
+  .bo-mgroup { overflow-x: auto; }
+  .bo-mtable { min-width: 460px; }
+  .bo-pagerow { flex-wrap: wrap; }
+}
+
+/* ============================================ shared topic icons (designIcon.md)
+ *
+ * One family for Settings and Reports. A duotone line mark (currentColor stroke +
+ * a soft teal ".uic-accent" fill) sitting on a rounded peacock tile. The depth is
+ * the tile and a soft shadow, not a glossy render — the brief wants recognizable,
+ * not decorative. Every size the spec calls out (16/18/20/24) stays legible because
+ * the symbols are simple silhouettes.
+ *
+ * .uic is the bare glyph; .uic-tile wraps it in the coloured rounded square used on
+ * cards and nav. Icons are always paired with a text label (§38), so the glyph is
+ * aria-hidden unless a caller passes an explicit label.
+ */
+.uic {
+  display: inline-block; vertical-align: middle; flex: none;
+  color: var(--primary, #00677f);           /* primary stroke */
+  fill: none;
+}
+.uic use { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* The accent shape is a soft teal wash behind the line, giving the duotone depth
+   without a gradient. Kept low-opacity so the silhouette reads first. */
+.uic .uic-accent { fill: var(--accent-fill, rgba(38, 198, 218, .18)); stroke: none; }
+
+/* The coloured tile behind an icon on cards and nav headers. */
+.uic-tile {
+  display: inline-grid; place-items: center; flex: none;
+  border-radius: 10px;
+  background: linear-gradient(150deg, var(--primary-soft, #e9f8fb), #fff);
+  border: 1px solid var(--line, #dbe6ee);
+  box-shadow: inset 0 -1px 2px rgba(0, 59, 77, .05);
+}
+.uic-tile .uic { color: var(--primary, #00677f); }
+
+/* Tones for status/severity icons (§31), reusing the platform status hues. */
+.uic-good { color: var(--ok, #16856a); }
+.uic-good .uic-accent { fill: rgba(22, 133, 106, .16); }
+.uic-warn { color: var(--warn, #a76a00); }
+.uic-warn .uic-accent { fill: rgba(167, 106, 0, .16); }
+.uic-bad { color: var(--danger, #b3261e); }
+.uic-bad .uic-accent { fill: rgba(179, 38, 30, .14); }
+.uic-muted { color: var(--muted, #627d98); }
+.uic-muted .uic-accent { fill: rgba(98, 125, 152, .14); }
+
+/* ============================================= config-page forms & record tables
+ * The generic settings forms (operating hours, integrations, partner benefits, …)
+ * and the read-only record tables. All white, rounded, comfortable — matching the
+ * report-table treatment so Settings and Reports read as one product.
+ */
+.bo-config-form { display: grid; gap: 4px; }
+
+.bo-subgroup {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px 4px; margin: 0 0 14px; background: var(--surface);
+}
+.bo-subgroup > legend {
+  padding: 0 6px; font-size: .82rem; font-weight: 700; color: var(--primary-deep);
+}
+.bo-inline-checks { border: 0; padding: 0; margin: 0 0 12px; display: grid; gap: 4px; }
+.bo-inline-checks > legend { font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
+
+/* Operating-hours grid: one row per weekday, comfortable, no dense spreadsheet feel. */
+.bo-hours { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.bo-hours th, .bo-hours td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.bo-hours thead th {
+  font-size: .74rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); font-weight: 700;
+}
+.bo-hours tbody th { font-weight: 600; white-space: nowrap; }
+.bo-hours input[type="time"] {
+  min-height: 38px; padding: 6px 8px; border: 1px solid var(--line);
+  border-radius: var(--radius-sm); font: inherit; background: var(--surface);
+}
+.bo-hours .bo-switch { min-height: 38px; }
+
+/* Record tables reuse the report .rp-table treatment; here is the surrounding chrome. */
+.bo-rec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.bo-rec-count { font-size: .82rem; color: var(--muted); }
+.bo-rec-note { margin-top: 10px; }
+#view-backoffice .rp-table-wrap {
+  background: var(--surface); border: 1px solid #e3ebf1; border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 45, 65, .05); overflow-x: auto;
+}
+#view-backoffice .rp-table { width: 100%; border-collapse: collapse; font-size: .875rem; color: #1f2937; }
+#view-backoffice .rp-table th {
+  padding: 12px 16px; text-align: left; background: #f6f9fb;
+  border-bottom: 1px solid #e3ebf1; font-size: .8rem; font-weight: 700; color: #102a43; white-space: nowrap;
+}
+#view-backoffice .rp-table td { padding: 13px 16px; border-bottom: 1px solid #eef3f7; }
+#view-backoffice .rp-table tbody tr:last-child td { border-bottom: 0; }
+#view-backoffice .rp-table tbody tr:hover { background: #f3fafc; }
+#view-backoffice .st {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: .72rem; font-weight: 700; border: 1px solid transparent;
+}
+#view-backoffice .st-good { background: #e6f6f1; color: #0f6b56; border-color: #b9e4d8; }
+#view-backoffice .st-warn { background: #fdf3e2; color: #8a5800; border-color: #f0d9a8; }
+#view-backoffice .st-bad { background: #fdeceb; color: #932019; border-color: #f3c4c0; }
+#view-backoffice .st-neutral { background: #eef2f6; color: #48607a; border-color: #dbe3ec; }
+
+/* Empty state for a record page with no rows yet (§27). */
+.bo-empty-state {
+  text-align: center; padding: 40px 20px; color: var(--ink-soft);
+  background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius-lg);
+}
+.bo-empty-ico { width: 40px; height: 40px; margin: 0 auto 12px; }
