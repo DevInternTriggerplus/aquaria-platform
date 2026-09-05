@@ -152,11 +152,11 @@ export function OrderSummary({
             disabled={busy || totalTickets === 0}
             className="flex min-h-[52px] w-full items-center justify-between gap-2 rounded-lg bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-50"
           >
-            <span>{busy ? "Working…" : "Checkout unavailable"}</span>
+            <span>{busy ? "Confirming…" : "Confirm mock payment"}</span>
             <span aria-hidden>→</span>
           </button>
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
-            <LockGlyph /> Demo preview · checkout unavailable
+            <LockGlyph /> Mock payment · no funds are captured
           </p>
         </div>
       </div>

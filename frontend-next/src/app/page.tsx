@@ -16,7 +16,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { OrderSummary, type SummaryLine } from "@/components/order-summary";
 import { StepCard } from "@/components/step-card";
 import { TicketTypeRow } from "@/components/ticket-type-row";
-import { api, pick, ApiError, type ChargeBreakdown, type Product, type Venue } from "@/lib/api";
+import {
+  api,
+  pick,
+  ApiError,
+  type ChargeBreakdown,
+  type ConfirmedBooking,
+  type ConsentDialog,
+  type Product,
+  type Venue,
+} from "@/lib/api";
 
 const LANG = "en";
 
@@ -44,6 +53,11 @@ export default function BookingPage() {
   const [visitDate, setVisitDate] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [charges, setCharges] = useState<ChargeBreakdown | null>(null);
+  const [consent, setConsent] = useState<ConsentDialog | null>(null);
+  const [consentItems, setConsentItems] = useState<Record<string, boolean>>({});
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [booking, setBooking] = useState<ConfirmedBooking | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -58,8 +72,19 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
+    api
+      .consent()
+      .then((dialog) => {
+        setConsent(dialog);
+        setConsentItems(Object.fromEntries(dialog.items.map((item) => [item.code, item.granted])));
+      })
+      .catch((e: ApiError) => setError(e.message));
+  }, []);
+
+  useEffect(() => {
     if (!visitDate) return;
     setQuantities({});
+    setBooking(null);
     api
       .products(visitDate)
       .then((data) => setProducts(data.products))
@@ -113,13 +138,48 @@ export default function BookingPage() {
   const venueName = venue ? pick(venue.name, LANG, venue.code) : "Aquaria";
   const hours = venue?.operating_hours?.default;
 
-  const onContinue = () => {
+  const onContinue = async () => {
+    const confirmationLines = ticketTypes
+      .filter(({ ticketType }) => (quantities[ticketType.id] ?? 0) > 0)
+      .map(({ ticketType }) => ({
+        ticket_type_id: ticketType.id,
+        quantity: quantities[ticketType.id] ?? 0,
+      }));
+    const requiredConsentMissing = consent?.items.some(
+      (item) => item.required && !consentItems[item.code],
+    );
+    if (!visitDate || confirmationLines.length === 0) return;
+    if (!fullName.trim() || !email.trim()) {
+      setError("Enter your name and email to create the demo booking.");
+      return;
+    }
+    if (requiredConsentMissing) {
+      setError("Accept the required privacy item to continue.");
+      return;
+    }
+
     setBusy(true);
-    // The confirm flow (PDPA consent, hold, payment) is the next port from the
-    // reference implementation. It must not be faked here: taking money is the one
-    // path that has to be right before it ships.
-    setError("Checkout is not wired up yet in this client. See the repository README.");
-    setBusy(false);
+    setError(null);
+    try {
+      // Quote and confirmation both re-price on the server; no client total is trusted.
+      const quote = await api.quote(visitDate, confirmationLines);
+      setCharges(quote.charges);
+      const idempotencyKey = crypto.randomUUID();
+      setBooking(
+        await api.confirm({
+          visit_date: visitDate,
+          lines: confirmationLines,
+          email: email.trim(),
+          full_name: fullName.trim(),
+          consent_items: consentItems,
+          idempotency_key: idempotencyKey,
+        }),
+      );
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Unable to create the demo booking.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -154,8 +214,8 @@ export default function BookingPage() {
             Book your visit to {venueName}
           </h1>
           <p className="mt-4 max-w-xl text-primary-foreground/85">
-            Browse ticket options and pricing for your visit. Checkout is not available in this
-            demonstration.
+            Choose your tickets and complete a simulated payment. No card data or real funds are
+            involved in this demonstration.
           </p>
         </div>
       </section>
@@ -240,6 +300,62 @@ export default function BookingPage() {
                     </div>
                   ))
                 )}
+              </StepCard>
+            ) : null}
+
+            {lines.length > 0 && !booking ? (
+              <StepCard step={3} title="Demo payment">
+                <p className="text-sm text-muted-foreground">
+                  This uses a simulated card authorization. No card number or real payment is
+                  collected.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="text-sm font-semibold">
+                    Full name
+                    <input
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                      autoComplete="name"
+                      className="mt-1.5 min-h-11 w-full rounded-lg border bg-card px-3 font-normal"
+                    />
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Email for demo ticket
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      autoComplete="email"
+                      className="mt-1.5 min-h-11 w-full rounded-lg border bg-card px-3 font-normal"
+                    />
+                  </label>
+                </div>
+                {consent?.items.map((item) => (
+                  <label key={item.code} className="mt-3 flex gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={consentItems[item.code] ?? false}
+                      onChange={(event) =>
+                        setConsentItems((current) => ({ ...current, [item.code]: event.target.checked }))
+                      }
+                      className="mt-0.5 h-4 w-4"
+                    />
+                    <span>
+                      {item.label}
+                      {item.required ? " (required)" : " (optional)"}
+                    </span>
+                  </label>
+                ))}
+              </StepCard>
+            ) : null}
+
+            {booking ? (
+              <StepCard step={3} title="Demo booking confirmed">
+                <p className="font-semibold">Booking {booking.booking_number} is confirmed.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Mock authorization {booking.payment?.provider_ref ?? "completed"}. No funds were captured.
+                </p>
+                <p className="mt-3 text-sm">{booking.tickets.length} demo ticket(s) issued for {visitDate}.</p>
               </StepCard>
             ) : null}
           </div>

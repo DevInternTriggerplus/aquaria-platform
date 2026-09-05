@@ -73,6 +73,20 @@ export interface ChargeBreakdown {
   currency: string;
 }
 
+export interface ConsentDialog {
+  items: { code: string; required: boolean; label: string; granted: boolean }[];
+}
+
+export interface ConfirmedBooking {
+  status: "CONFIRMED";
+  confirmed: boolean;
+  booking_number: string;
+  total_minor: number;
+  currency: string;
+  payment: { provider_ref: string; status: string } | null;
+  tickets: { id: string; ticket_number: string; visit_date: string; qr_payload: string }[];
+}
+
 export class ApiError extends Error {
   code: string;
   reference?: string;
@@ -150,6 +164,27 @@ export const api = {
     request<ChargeBreakdown>(
       `/api/venues/${VENUE}/charge-preview/?base_minor=${baseMinor}&date=${encodeURIComponent(date)}`,
     ),
+
+  consent: () => request<ConsentDialog>(`/api/venues/${VENUE}/consent/`),
+
+  quote: (visitDate: string, lines: { ticket_type_id: string; quantity: number }[]) =>
+    request<{ charges: ChargeBreakdown }>(`/api/venues/${VENUE}/quote/`, {
+      method: "POST",
+      body: JSON.stringify({ visit_date: visitDate, lines }),
+    }),
+
+  confirm: (payload: {
+    visit_date: string;
+    lines: { ticket_type_id: string; quantity: number }[];
+    email: string;
+    full_name: string;
+    consent_items: Record<string, boolean>;
+    idempotency_key: string;
+  }) =>
+    request<ConfirmedBooking>(`/api/venues/${VENUE}/confirm/`, {
+      method: "POST",
+      body: JSON.stringify({ ...payload, payment_method: "CARD" }),
+    }),
 };
 
 /** Pick a language from a translatable map, falling back to English. */
