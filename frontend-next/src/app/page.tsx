@@ -148,7 +148,7 @@ export default function BookingPage() {
         />
         <div className="mx-auto max-w-6xl px-4 py-14 text-primary-foreground sm:py-16">
           <p className="inline-flex rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-            Online booking
+            Online booking demo
           </p>
           <h1 className="mt-4 max-w-2xl text-4xl leading-tight font-semibold sm:text-5xl">
             Book your visit to {venueName}

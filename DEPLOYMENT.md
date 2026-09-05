@@ -10,6 +10,11 @@ This is a public demonstration environment, not a production ticket-sales system
 The API service sleeps after idle time on Render Free, checkout is not wired in the
 Next.js client, and the backend has only a simulated payment gateway.
 
+When `BACKEND_ORIGIN` is not configured, Vercel serves a read-only demo catalogue
+from the Next.js API route so the public booking interface remains viewable. It has
+no booking write endpoints and is automatically replaced by the Django API once
+`BACKEND_ORIGIN` is set.
+
 ## 1. Create the database
 
 1. Create a Neon Free project in the Singapore region.
