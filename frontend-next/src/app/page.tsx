@@ -154,8 +154,8 @@ export default function BookingPage() {
             Book your visit to {venueName}
           </h1>
           <p className="mt-4 max-w-xl text-primary-foreground/85">
-            Pick your date, choose your tickets and pay securely. Your QR e-ticket arrives by
-            email — walk straight to the gate.
+            Browse ticket options and pricing for your visit. Checkout is not available in this
+            demonstration.
           </p>
         </div>
       </section>
