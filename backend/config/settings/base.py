@@ -14,6 +14,7 @@ in the venue's IANA timezone.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import environ
@@ -39,7 +40,7 @@ env = environ.Env(
 # .env, and the suite then runs against SQLite while the developer believes it is on
 # PostgreSQL. The project file is the source of truth for local runs.
 _env_file = BASE_DIR / ".env"
-if _env_file.is_file():
+if _env_file.is_file() and not os.environ.get("SKIP_DOTENV"):
     environ.Env.read_env(str(_env_file), overwrite=True)
 
 SECRET_KEY = env("SECRET_KEY")
